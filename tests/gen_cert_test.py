@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import gnupg
 import os
 import shutil
 import tempfile
 import urllib2
 
+import gnupg
 from nose.plugins.skip import SkipTest
 from nose.tools import assert_true
 

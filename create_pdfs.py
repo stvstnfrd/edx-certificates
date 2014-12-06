@@ -4,12 +4,13 @@ This is a standalone utility for generating certficiates.
 It will use test data in tests/test_data.py for names and courses.
 PDFs by default will be dropped in TMP_GEN_DIR for review
 """
-from argparse import ArgumentParser, RawTextHelpFormatter
 import csv
 import os
 import random
 import shutil
 import sys
+
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME, TMP_GEN_DIR
 import settings

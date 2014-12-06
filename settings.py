@@ -8,8 +8,9 @@ import json
 import os
 import yaml
 
-from logsettings import get_logger_config
 from path import path
+
+from logsettings import get_logger_config
 
 
 ROOT_PATH = path(__file__).dirname()

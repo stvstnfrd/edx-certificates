@@ -2,15 +2,21 @@
 
 import copy
 import datetime
-import gnupg
 import math
 import os
 import re
 import shutil
 import StringIO
 import uuid
+from glob import glob
+from HTMLParser import HTMLParser
 
-from reportlab.platypus import Paragraph
+import boto.s3
+import gnupg
+import logging.config
+import reportlab.rl_config
+from bidi.algorithm import get_display
+from boto.s3.key import Key
 from PyPDF2 import PdfFileWriter, PdfFileReader
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
@@ -19,20 +25,14 @@ from reportlab.lib.pagesizes import A4, letter, landscape, portrait
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from reportlab.pdfbase.pdfmetrics import stringWidth
-from glob import glob
-from HTMLParser import HTMLParser
+from reportlab.platypus import Paragraph
 
-import settings
-import logging.config
-import reportlab.rl_config
-import tempfile
-import boto.s3
-from boto.s3.key import Key
-from bidi.algorithm import get_display
 import arabic_reshaper
+import settings
+import tempfile
 
 
 reportlab.rl_config.warnOnMissingFontGlyphs = 0

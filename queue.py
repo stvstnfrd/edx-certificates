@@ -1,8 +1,9 @@
-import requests
 import json
+
+import logging
+import requests
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, Timeout
-import logging
 
 log = logging.getLogger(__name__)
 

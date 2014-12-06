@@ -1,12 +1,14 @@
+import json
+import os
+import sys
+import time
+
 from argparse import ArgumentParser, RawTextHelpFormatter
 import logging.config
-import json
-import sys
-import os
-import time
-import settings
-from queue import XQueuePullManager
+
 from gen_cert import CertificateGen
+from queue import XQueuePullManager
+import settings
 
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates: ' + __name__)

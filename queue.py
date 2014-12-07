@@ -1,6 +1,7 @@
 """
 XQueue management wrapper
 """
+# TODO: rename this file, get rid of leading capital
 import json
 
 import logging
@@ -10,6 +11,7 @@ from requests.exceptions import ConnectionError, Timeout
 
 LOG = logging.getLogger(__name__)
 
+# TODO: standardize naming/formatting
 ERROR_CONNECT = "Unable to connect to queue: %s"
 ERROR_GET = "Unable to get submission from queue: %s"
 ERROR_LEN = "Unable to get queue length: %s"
@@ -27,6 +29,7 @@ class InvalidReturnCode(Exception):
     pass
 
 
+# TODO: make this private
 def validate(response):
     """
     Check for a valid return code in XQueue response
@@ -35,6 +38,7 @@ def validate(response):
     :type response: dict
     """
     if response['return_code'] != 0:
+        # TODO: create message constant
         LOG.critical("response: %s", response.text)
         raise InvalidReturnCode(ERROR_VALIDATE.format(
             response['return_code'],
@@ -42,6 +46,7 @@ def validate(response):
         ))
 
 
+# TODO: rename class
 class XQueuePullManager(object):
     """
     Provide an interface to the XQueue server
@@ -169,7 +174,6 @@ class XQueuePullManager(object):
         )
         return session
 
-    # TODO: write docstring
     def _request(self, method, url, error_message, **kwargs):
         """
         Make a request to the XQueue server

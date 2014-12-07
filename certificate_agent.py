@@ -1,3 +1,6 @@
+"""
+Monitor an xqueue for certificate generation
+"""
 import json
 import os
 import sys

@@ -13,3 +13,4 @@ requests==0.14.1
 simples3==1.0-alpha
 wsgiref==0.1.2
 python-bidi==0.3.4
+mock==1.0.1

@@ -129,6 +129,13 @@ CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(
     CERT_BUCKET,
 )
 
+QUEUE_AUTH_USER = None
+QUEUE_AUTH_PASS = None
+QUEUE_USER = None
+QUEUE_PASS = None
+QUEUE_URL = 'https://example.com'
+QUEUE_NAME = None
+
 if os.path.isfile(ENV_ROOT / "auth.json"):
     with open(ENV_ROOT / "auth.json") as env_file:
         ENV_TOKENS = json.load(env_file)

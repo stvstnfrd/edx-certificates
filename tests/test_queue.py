@@ -10,6 +10,7 @@ from queue import XQueuePullManager
 
 url_re = re.compile(r'http://example.com/.*')
 
+
 class QueueTest(unittest.TestCase):
 
     def setUp(self):

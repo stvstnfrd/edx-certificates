@@ -2,13 +2,11 @@
 import requests
 import responses
 import re
+import unittest
 
 import settings
-import unittest
 from mock import patch
 from queue import XQueuePullManager
-
-url_re = re.compile(r'http://example.com/.*')
 
 
 class QueueTest(unittest.TestCase):
@@ -82,13 +80,18 @@ class QueueTest(unittest.TestCase):
         pass
 
     def test_pop_fail(self):
+        """
+        self.manager = get_invalid_manager()
+        """
         pass
 
     def test_str(self):
-        string = str(self.manager)
+        """
+        Test string and unicode representations are equal to the base URL
+        """
+        string_str = str(self.manager)
         string_unicode = unicode(self.manager)
-        self.assertEquals(string, string_unicode)
-        pass
+        self.assertEquals(string_str, string_unicode)
 
     def test_len(self):
         pass

@@ -53,24 +53,25 @@ def parse_args(args=sys.argv[1:]):
 
 
 def main():
-
+    auth_basic = (settings.QUEUE_AUTH_USER, settings.QUEUE_AUTH_PASS)
+    auth_xqueue = (settings.QUEUE_USER, settings.QUEUE_PASS)
     manager = XQueuePullManager(
-        settings.QUEUE_URL, settings.QUEUE_NAME,
-        settings.QUEUE_AUTH_USER,
-        settings.QUEUE_AUTH_PASS,
-        settings.QUEUE_USER, settings.QUEUE_PASS,
+        settings.QUEUE_URL,
+        settings.QUEUE_NAME,
+        auth_basic,
+        auth_xqueue,
     )
     last_course = None  # The last course_id we generated for
     cert = None  # A CertificateGen instance for a particular course
 
     while True:
 
-        if manager.get_length() == 0:
+        if len(manager) == 0:
             log.debug("{0} has no jobs".format(str(manager)))
             time.sleep(SLEEP_TIME)
             continue
         else:
-            log.debug('queue length: {0}'.format(manager.get_length()))
+            log.debug('queue length: {0}'.format(len(manager)))
 
         xqueue_body = {}
         xqueue_header = ''
@@ -82,7 +83,7 @@ def main():
         template_pdf = None
         name = ''
 
-        certdata = manager.get_submission()
+        certdata = manager.pop()
         log.debug('xqueue response: {0}'.format(certdata))
         try:
             xqueue_body = json.loads(certdata['xqueue_body'])
@@ -186,7 +187,7 @@ def main():
                     'error_reason': error_reason,
                 }),
             }
-            manager.respond(xqueue_reply)
+            manager.put(xqueue_reply)
             if settings.DEBUG:
                 raise
             else:
@@ -205,7 +206,7 @@ def main():
             }),
         }
         log.info("Posting result to the LMS: {0}".format(xqueue_reply))
-        manager.respond(xqueue_reply)
+        manager.put(xqueue_reply)
 
 
 if __name__ == '__main__':

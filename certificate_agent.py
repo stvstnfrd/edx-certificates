@@ -52,10 +52,12 @@ def parse_args(args=sys.argv[1:]):
 
 def main():
 
-    manager = XQueuePullManager(settings.QUEUE_URL, settings.QUEUE_NAME,
-                                settings.QUEUE_AUTH_USER,
-                                settings.QUEUE_AUTH_PASS,
-                                settings.QUEUE_USER, settings.QUEUE_PASS)
+    manager = XQueuePullManager(
+        settings.QUEUE_URL, settings.QUEUE_NAME,
+        settings.QUEUE_AUTH_USER,
+        settings.QUEUE_AUTH_PASS,
+        settings.QUEUE_USER, settings.QUEUE_PASS,
+    )
     last_course = None  # The last course_id we generated for
     cert = None  # A CertificateGen instance for a particular course
 
@@ -103,13 +105,20 @@ def main():
                 )
                 last_course = course_id
             if action in ['remove', 'regen']:
-                cert.delete_certificate(xqueue_body['delete_download_uuid'],
-                                        xqueue_body['delete_verify_uuid'])
+                cert.delete_certificate(
+                    xqueue_body['delete_download_uuid'],
+                    xqueue_body['delete_verify_uuid'],
+                )
                 if action in ['remove']:
                     continue
 
         except (TypeError, ValueError, KeyError, IOError) as e:
-            log.critical('Unable to parse queue submission ({0}) : {1}'.format(e, certdata))
+            log.critical(
+                'Unable to parse queue submission ({0}) : {1}'.format(
+                    e,
+                    certdata,
+                ),
+            )
             if settings.DEBUG:
                 raise
             else:
@@ -117,16 +126,19 @@ def main():
 
         try:
             log.info(
-                "Generating certificate for {username} ({name}), in {course_id}, with grade {grade}".format(
+                "Generating certificate for {username} ({name}), "
+                "in {course_id}, with grade {grade}".format(
                     username=username.encode('utf-8'),
                     name=name.encode('utf-8'),
                     course_id=course_id.encode('utf-8'),
                     grade=grade,
                 )
             )
-            (download_uuid,
-             verify_uuid,
-             download_url) = cert.create_and_upload(name.encode('utf-8'), grade=grade, designation=designation)
+            (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+                name.encode('utf-8'),
+                grade=grade,
+                designation=designation,
+            )
 
         except Exception as e:
             # global exception handler, if anything goes wrong
@@ -139,17 +151,21 @@ def main():
 
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            error_reason = '({username} {course_id}) {exception_type}: {exception}: {file_name}:{line_number}'.format(
-                username=username,
-                course_id=course_id,
-                exception_type=exc_type,
-                exception=e,
-                file_name=fname,
-                line_number=exc_tb.tb_lineno,
+            error_reason = (
+                '({username} {course_id}) {exception_type}: '
+                '{exception}: {file_name}:{line_number}'.format(
+                    username=username,
+                    course_id=course_id,
+                    exception_type=exc_type,
+                    exception=e,
+                    file_name=fname,
+                    line_number=exc_tb.tb_lineno,
+                )
             )
 
             log.critical(
-                'An error occurred during certificate generation {reason}'.format(
+                'An error occurred during '
+                'certificate generation {reason}'.format(
                     reason=error_reason,
                 )
             )
@@ -157,8 +173,11 @@ def main():
             xqueue_reply = {
                 'xqueue_header': json.dumps(xqueue_header),
                 'xqueue_body': json.dumps({
-                    'error': 'There was an error processing the certificate request: {error}'.format(
-                        error=e,
+                    'error': (
+                        'There was an error processing '
+                        'the certificate request: {error}'.format(
+                            error=e,
+                        )
                     ),
                     'username': username,
                     'course_id': course_id,

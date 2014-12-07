@@ -20,40 +20,86 @@ description = """
   Sample certificate generator
 """
 
-stanford_cme_titles = (('AuD', 'AuD'),
-                       ('DDS', 'DDS'),
-                       ('DO', 'DO'),
-                       ('MD', 'MD'),
-                       ('MD,PhD', 'MD,PhD'),
-                       ('MBBS', 'MBBS'),
-                       ('NP', 'NP'),
-                       ('PA', 'PA'),
-                       ('PharmD', 'PharmD'),
-                       ('PhD', 'PhD'),
-                       ('RN', 'RN'),
-                       ('Other', 'Other'),
-                       ('None', 'None'),
-                       (None, None))
+stanford_cme_titles = (
+    ('AuD', 'AuD'),
+    ('DDS', 'DDS'),
+    ('DO', 'DO'),
+    ('MD', 'MD'),
+    ('MD,PhD', 'MD,PhD'),
+    ('MBBS', 'MBBS'),
+    ('NP', 'NP'),
+    ('PA', 'PA'),
+    ('PharmD', 'PharmD'),
+    ('PhD', 'PhD'),
+    ('RN', 'RN'),
+    ('Other', 'Other'),
+    ('None', 'None'),
+    (None, None),
+)
 
 
 def parse_args(args=sys.argv[1:]):
-    parser = ArgumentParser(description=description,
-                            formatter_class=RawTextHelpFormatter)
+    parser = ArgumentParser(
+        description=description,
+        formatter_class=RawTextHelpFormatter,
+    )
 
-    parser.add_argument('-c', '--course-id', help='optional course-id')
-    parser.add_argument('-n', '--name', help='optional name for the cert')
-    parser.add_argument('-t', '--template-file', help='optional template file')
-    parser.add_argument('-o', '--long-org', help='optional long org')
-    parser.add_argument('-l', '--long-course', help='optional long course')
-    parser.add_argument('-i', '--issued-date', help='optional issue date')
-    parser.add_argument('-U', '--no-upload', help='skip s3 upload step', action="store_true")
-    parser.add_argument('-R', '--random-title', help='add random title to name')
-    parser.add_argument('-f', '--input-file',
-                        help='optional input file for names, one name per line')
-    parser.add_argument('-w', '--output-file',
-                        help='optional output file for certificate')
-    parser.add_argument('-G', '--grade-text',
-                        help='optional grading label to apply')
+    parser.add_argument(
+        '-c',
+        '--course-id',
+        help='optional course-id',
+    )
+    parser.add_argument(
+        '-n',
+        '--name',
+        help='optional name for the cert',
+    )
+    parser.add_argument(
+        '-t',
+        '--template-file',
+        help='optional template file',
+    )
+    parser.add_argument(
+        '-o',
+        '--long-org',
+        help='optional long org',
+    )
+    parser.add_argument(
+        '-l',
+        '--long-course',
+        help='optional long course',
+    )
+    parser.add_argument(
+        '-i',
+        '--issued-date',
+        help='optional issue date',
+    )
+    parser.add_argument(
+        '-U',
+        '--no-upload',
+        help='skip s3 upload step',
+        action="store_true",
+    )
+    parser.add_argument(
+        '-R',
+        '--random-title',
+        help='add random title to name',
+    )
+    parser.add_argument(
+        '-f',
+        '--input-file',
+        help='optional input file for names, one name per line',
+    )
+    parser.add_argument(
+        '-w',
+        '--output-file',
+        help='optional output file for certificate',
+    )
+    parser.add_argument(
+        '-G',
+        '--grade-text',
+        help='optional grading label to apply',
+    )
 
     return parser.parse_args()
 
@@ -72,7 +118,10 @@ def main():
         output_f = open(args.output_file, 'bw')
 
     # Remove files if they exist
-    for d in [pdf_dir, copy_dir]:
+    for d in [
+        pdf_dir,
+        copy_dir,
+    ]:
         if os.path.exists(d):
             shutil.rmtree(d)
 
@@ -82,7 +131,9 @@ def main():
     certificate_data = []
 
     if args.course_id:
-        course_list = [args.course_id]
+        course_list = [
+            args.course_id,
+        ]
     else:
         course_list = settings.CERT_DATA.keys()
 
@@ -92,10 +143,15 @@ def main():
 
     for course in course_list:
         if args.name:
-            name_list = [args.name]
+            name_list = [
+                args.name,
+            ]
         elif args.input_file:
             with open(args.input_file) as f:
-                name_list = [line.rstrip() for line in f.readlines()]
+                name_list = [
+                    line.rstrip()
+                    for line in f.readlines()
+                ]
         else:
             name_list = NAMES
 
@@ -117,24 +173,43 @@ def main():
             grade = None
             if args.grade_text:
                 grade = args.grade_text
-            (download_uuid, verify_uuid,
-                download_url) = cert.create_and_upload(name, upload=upload_files, copy_to_webroot=False,
-                                                       cleanup=False, designation=title, grade=grade)
+            (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+                name,
+                upload=upload_files,
+                copy_to_webroot=False,
+                cleanup=False,
+                designation=title,
+                grade=grade,
+            )
             certificate_data.append((name, download_url))
             gen_dir = os.path.join(cert.dir_prefix, S3_CERT_PATH, download_uuid)
             copy_dest = '{copy_dir}/{course}-{name}.pdf'.format(
                 copy_dir=copy_dir,
                 name=name.replace(" ", "-").replace("/", "-"),
-                course=course.replace("/", "-"))
+                course=course.replace("/", "-"),
+            )
 
             try:
-                shutil.copyfile('{0}/{1}'.format(gen_dir, TARGET_FILENAME),
-                                unicode(copy_dest.decode('utf-8')))
+                shutil.copyfile(
+                    '{0}/{1}'.format(
+                        gen_dir,
+                        TARGET_FILENAME,
+                    ),
+                    unicode(copy_dest.decode('utf-8')),
+                )
             except Exception, msg:
-                # Sometimes we have problems finding or creating the files to be copied;
-                # the following lines help us debug this case
+                # Sometimes we have problems finding or creating the
+                # files to be copied; the following lines help us debug
+                # this case
                 print msg
-                print "%s\n%s\n%s\n%s\n%s\n%s" % (name, download_uuid, verify_uuid, download_uuid, gen_dir, copy_dest)
+                print '\n'.join([
+                    name,
+                    download_uuid,
+                    verify_uuid,
+                    download_uuid,
+                    gen_dir,
+                    copy_dest,
+                ])
                 raise
             print "Created {0}".format(copy_dest)
 

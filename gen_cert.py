@@ -49,7 +49,11 @@ S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')
 TARGET_FILENAME = getattr(settings, 'CERT_FILENAME', 'Certificate.pdf')
 TMP_GEN_DIR = getattr(settings, 'TMP_GEN_DIR', '/var/tmp/generated_certs')
 CERTS_ARE_CALLED = getattr(settings, 'CERTS_ARE_CALLED', 'certificate')
-CERTS_ARE_CALLED_PLURAL = getattr(settings, 'CERTS_ARE_CALLED_PLURAL', 'certificates')
+CERTS_ARE_CALLED_PLURAL = getattr(
+    settings,
+    'CERTS_ARE_CALLED_PLURAL',
+    'certificates',
+)
 
 # reduce logging level for gnupg
 l = logging.getLogger('gnupg')
@@ -71,9 +75,15 @@ for font_file in glob('{0}/fonts/*.ttf'.format(TEMPLATE_DIR)):
 # These are small, so let's just load them at import time and keep them around
 # so we don't have to keep doing the file I/o
 BLANK_PDFS = {
-    'landscape-A4': PdfFileReader(file("{0}/blank.pdf".format(TEMPLATE_DIR), "rb")),
-    'landscape-letter': PdfFileReader(file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb")),
-    'portrait-A4': PdfFileReader(file("{0}/blank-portrait-A4.pdf".format(TEMPLATE_DIR), "rb")),
+    'landscape-A4': PdfFileReader(
+        file("{0}/blank.pdf".format(TEMPLATE_DIR), "rb"),
+    ),
+    'landscape-letter': PdfFileReader(
+        file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb"),
+    ),
+    'portrait-A4': PdfFileReader(
+        file("{0}/blank-portrait-A4.pdf".format(TEMPLATE_DIR), "rb"),
+    ),
 }
 
 
@@ -81,11 +91,41 @@ def prettify_isodate(isoformat_date):
     """Convert a string like '2012-02-02' to one like 'February 2nd, 2012'"""
     m = RE_ISODATES.match(isoformat_date)
     if not m:
-        raise TypeError("prettify_isodate called with incorrect date format: %s" % isoformat_date)
-    day_suffixes = {'1': 'st', '2': 'nd', '3': 'rd', '21': 'st', '22': 'nd', '23': 'rd', '31': 'st'}
-    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-              'August', 'September', 'October', 'November', 'December']
-    date = {'year': '', 'month': '', 'day': '', 'suffix': 'th'}
+        raise TypeError(
+            "prettify_isodate called with incorrect date format: "
+            "{date_format}".format(
+                date_format=isoformat_date,
+            ),
+        )
+    day_suffixes = {
+        '1': 'st',
+        '2': 'nd',
+        '3': 'rd',
+        '21': 'st',
+        '22': 'nd',
+        '23': 'rd',
+        '31': 'st',
+    }
+    months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+    ]
+    date = {
+        'year': '',
+        'month': '',
+        'day': '',
+        'suffix': 'th',
+    }
     date['year'] = m.group('year')
     date['month'] = months[int(m.group('month')) - 1]
     date['day'] = m.group('day').lstrip('0')
@@ -94,7 +134,8 @@ def prettify_isodate(isoformat_date):
 
 
 def font_for_string(fontlist, ustring):
-    """Determine the best font to render a string.
+    """
+    Determine the best font to render a string.
 
     Given a list of fonts in priority order (that is, prettiest-first) and a
     string which may or may not contain Unicode characters, test the string's
@@ -111,19 +152,39 @@ def font_for_string(fontlist, ustring):
     for fonttuple in fontlist:
         fonttag = fonttuple[0]
         codepoints = FONT_CHARACTER_TABLES.get(fonttag, [])
-        OK = reduce(lambda x, y: x and y, (ord(c) in codepoints for c in ustring.decode('utf-8')))
+        OK = reduce(
+            lambda x, y: x and y,
+            (
+                ord(c) in codepoints
+                for c in ustring.decode('utf-8')
+            ),
+        )
         if OK:
             return fonttuple
     # No font we tested supports this string, throw an exception.
     # Then a human can and should install better fonts
-    raise ValueError("Nothing in fontlist supports string '{0}'. Fontlist: {1}".format(ustring, repr(fontlist)))
+    raise ValueError(
+        "Nothing in fontlist supports string '{0}'. Fontlist: {1}".format(
+            ustring,
+            repr(fontlist),
+        ),
+    )
 
 
 class CertificateGen(object):
     """Manages the pdf, signatures, and S3 bucket for course certificates."""
 
-    def __init__(self, course_id, template_pdf=None, aws_id=None, aws_key=None,
-                 dir_prefix=None, long_org=None, long_course=None, issued_date=None):
+    def __init__(
+        self,
+        course_id,
+        template_pdf=None,
+        aws_id=None,
+        aws_key=None,
+        dir_prefix=None,
+        long_org=None,
+        long_course=None,
+        issued_date=None,
+    ):
         """Load a pdf template and initialize
 
         Multiple certificates can be generated and uploaded for a single course.
@@ -158,11 +219,25 @@ class CertificateGen(object):
         # lookup long names from the course_id
         try:
             self.long_org = long_org or cert_data['LONG_ORG'].encode('utf-8')
-            self.long_course = long_course or cert_data.get('LONG_COURSE', '').encode('utf-8')
-            self.issued_date = issued_date or cert_data.get('ISSUED_DATE', '').encode('utf-8') or 'ROLLING'
+            self.long_course = (
+                long_course
+                or
+                cert_data.get('LONG_COURSE', '').encode('utf-8')
+            )
+            self.issued_date = (
+                issued_date
+                or
+                cert_data.get('ISSUED_DATE', '').encode('utf-8')
+                or
+                'ROLLING'
+            )
             self.interstitial_texts = cert_data.get('interstitial', {})
         except KeyError:
-            log.critical("Unable to lookup long names for course {0}".format(course_id))
+            log.critical(
+                "Unable to lookup long names for course {0}".format(
+                    course_id,
+                ),
+            )
             raise
 
         # split the org and course from the course_id
@@ -179,22 +254,43 @@ class CertificateGen(object):
         self.template_type = 'honor'
         # search for certain keywords in the file name, we'll probably want to
         # be better at parsing this later
-        template_prefix = '{0}/v{1}-cert-templates'.format(TEMPLATE_DIR, self.template_version)
+        template_prefix = '{0}/v{1}-cert-templates'.format(
+            TEMPLATE_DIR,
+            self.template_version,
+        )
         template_pdf_filename = "{0}/certificate-template-{1}-{2}.pdf".format(
             template_prefix, self.org, self.course)
         if template_pdf:
-            template_pdf_filename = "{0}/{1}".format(template_prefix, template_pdf)
+            template_pdf_filename = "{0}/{1}".format(
+                template_prefix,
+                template_pdf,
+            )
             if 'verified' in template_pdf:
                 self.template_type = 'verified'
         try:
             self.template_pdf = PdfFileReader(file(template_pdf_filename, "rb"))
         except IOError as e:
-            log.critical("I/O error ({0}): {1} opening {2}".format(e.errno, e.strerror, template_pdf_filename))
+            log.critical(
+                "I/O error ({0}): {1} opening {2}".format(
+                    e.errno,
+                    e.strerror,
+                    template_pdf_filename,
+                ),
+            )
             raise
 
-        self.cert_label_singular = cert_data.get('CERTS_ARE_CALLED', CERTS_ARE_CALLED)
-        self.cert_label_plural = cert_data.get('CERTS_ARE_CALLED_PLURAL', CERTS_ARE_CALLED_PLURAL)
-        self.course_association_text = cert_data.get('COURSE_ASSOCIATION_TEXT', 'a course of study')
+        self.cert_label_singular = cert_data.get(
+            'CERTS_ARE_CALLED',
+            CERTS_ARE_CALLED,
+        )
+        self.cert_label_plural = cert_data.get(
+            'CERTS_ARE_CALLED_PLURAL',
+            CERTS_ARE_CALLED_PLURAL,
+        )
+        self.course_association_text = cert_data.get(
+            'COURSE_ASSOCIATION_TEXT',
+            'a course of study',
+        )
 
     def delete_certificate(self, delete_download_uuid, delete_verify_uuid):
         # TODO remove/archive an existing certificate
@@ -233,27 +329,50 @@ class CertificateGen(object):
         certificates_path = os.path.join(self.dir_prefix, S3_CERT_PATH)
         verify_path = os.path.join(self.dir_prefix, S3_VERIFY_PATH)
 
-        (download_uuid, verify_uuid, download_url) = self._generate_certificate(student_name=name,
-                                                                                download_dir=certificates_path,
-                                                                                verify_dir=verify_path,
-                                                                                grade=grade,
-                                                                                designation=designation,)
+        (download_uuid, verify_uuid, download_url) = self._generate_certificate(
+            student_name=name,
+            download_dir=certificates_path,
+            verify_dir=verify_path,
+            grade=grade,
+            designation=designation,
+        )
 
         # upload generated certificate and verification files to S3
         for dirpath, dirnames, filenames in os.walk(self.dir_prefix):
             for filename in filenames:
                 local_path = os.path.join(dirpath, filename)
-                dest_path = os.path.relpath(os.path.join(dirpath, filename), start=self.dir_prefix)
+                dest_path = os.path.relpath(
+                    os.path.join(dirpath, filename),
+                    start=self.dir_prefix,
+                )
                 if upload:
-                    s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
+                    s3_conn = boto.connect_s3(
+                        settings.CERT_AWS_ID,
+                        settings.CERT_AWS_KEY,
+                    )
                     bucket = s3_conn.get_bucket(BUCKET)
                     key = Key(bucket, name=dest_path)
-                    log.info('uploading to {0} from {1} to {2}'.format(settings.CERT_URL, local_path, dest_path))
-                    key.set_contents_from_filename(local_path, policy='public-read')
+                    log.info(
+                        'uploading to {0} from {1} to {2}'.format(
+                            settings.CERT_URL,
+                            local_path,
+                            dest_path,
+                        ),
+                    )
+                    key.set_contents_from_filename(
+                        local_path,
+                        policy='public-read',
+                    )
 
                 if copy_to_webroot:
                     publish_dest = os.path.join(cert_web_root, dest_path)
-                    log.info('publishing to {0} from {1} to {2}'.format(settings.CERT_URL, local_path, publish_dest))
+                    log.info(
+                        'publishing to {0} from {1} to {2}'.format(
+                            settings.CERT_URL,
+                            local_path,
+                            publish_dest,
+                        ),
+                    )
                     if not os.path.exists(os.path.dirname(publish_dest)):
                         os.makedirs(os.path.dirname(publish_dest))
                     shutil.copy(local_path, publish_dest)
@@ -284,7 +403,8 @@ class CertificateGen(object):
             'stanford': self._generate_stanford_SOA,
             'stanford_cme': self._generate_stanford_cme_certificate,
         }
-        # TODO: we should be taking args, kwargs, and passing those on to our callees
+        # TODO: we should be taking args, kwargs,
+        # and passing those on to our callees
         return versionmap[self.template_version](
             student_name,
             download_dir,
@@ -329,9 +449,21 @@ class CertificateGen(object):
         addMapping('OpenSans-Regular', 1, 0, 'OpenSans-Bold')
         addMapping('OpenSans-Regular', 1, 1, 'OpenSans-BoldItalic')
 
-        styleArial = ParagraphStyle(name="arial", leading=10, fontName='Arial Unicode')
-        styleOpenSans = ParagraphStyle(name="opensans-regular", leading=10, fontName='OpenSans-Regular')
-        styleOpenSansLight = ParagraphStyle(name="opensans-light", leading=10, fontName='OpenSans-Light')
+        styleArial = ParagraphStyle(
+            name="arial",
+            leading=10,
+            fontName='Arial Unicode',
+        )
+        styleOpenSans = ParagraphStyle(
+            name="opensans-regular",
+            leading=10,
+            fontName='OpenSans-Regular',
+        )
+        styleOpenSansLight = ParagraphStyle(
+            name="opensans-light",
+            leading=10,
+            fontName='OpenSans-Light',
+        )
 
         # Text is overlayed top to bottom
         #   * Issued date (top right corner)
@@ -408,12 +540,20 @@ class CertificateGen(object):
         # unusual characters
         style = styleOpenSans
         style.leading = 10
-        width = stringWidth(student_name.decode('utf-8'), 'OpenSans-Bold', 34) / mm
+        width = stringWidth(
+            student_name.decode('utf-8'),
+            'OpenSans-Bold',
+            34,
+        ) / mm
         paragraph_string = "<b>{0}</b>".format(student_name)
 
         if self._use_unicode_font(student_name):
             style = styleArial
-            width = stringWidth(student_name.decode('utf-8'), 'Arial Unicode', 34) / mm
+            width = stringWidth(
+                student_name.decode('utf-8'),
+                'Arial Unicode',
+                34,
+            ) / mm
             # There is no bold styling for Arial :(
             paragraph_string = "{0}".format(student_name)
 
@@ -442,11 +582,9 @@ class CertificateGen(object):
             0.302, 0.306, 0.318)
         styleOpenSansLight.alignment = TA_LEFT
 
-        paragraph_string = "successfully completed"
+        paragraph_string = 'successfully completed'
         if '7.00x' in self.course:
-            paragraph_string = "successfully completed the inaugural offering of"
-        else:
-            paragraph_string = "successfully completed"
+            paragraph_string += ' the inaugural offering of'
 
         paragraph = Paragraph(paragraph_string, styleOpenSansLight)
 
@@ -576,7 +714,8 @@ class CertificateGen(object):
         designation=None,
     ):
         """
-        We have a new set of certificates that we want to generate which means brand new generation of certs
+        We have a new set of certificates that we want to generate which
+        means brand new generation of certs
         """
 
         # 8.5x11 page size 279.4mm x 215.9mm
@@ -595,10 +734,16 @@ class CertificateGen(object):
         overlay_pdf_buffer = StringIO.StringIO()
         c = canvas.Canvas(overlay_pdf_buffer, pagesize=landscape(letter))
 
-        styleOpenSans = ParagraphStyle(name="opensans-regular", leading=10,
-                                       fontName='OpenSans-Regular')
-        styleArial = ParagraphStyle(name="arial", leading=10,
-                                    fontName='Arial Unicode')
+        styleOpenSans = ParagraphStyle(
+            name="opensans-regular",
+            leading=10,
+            fontName='OpenSans-Regular',
+        )
+        styleArial = ParagraphStyle(
+            name="arial",
+            leading=10,
+            fontName='Arial Unicode',
+        )
 
         # Text is overlayed top to bottom
         #   * Issued date (top right corner)
@@ -617,7 +762,7 @@ class CertificateGen(object):
 
         # STYLE: grid/layout
         LEFT_INDENT = 23  # mm from the left side to write the text
-        MAX_WIDTH = 150  # maximum width on the content in the cert, used for wrapping
+        MAX_WIDTH = 150  # for the content in the cert, used for wrapping
 
         # STYLE: template-wide typography settings
         style_type_metacopy_size = 13
@@ -669,7 +814,10 @@ class CertificateGen(object):
         html = HTMLParser()
 
         # ELEM: Metacopy
-        styleAvenirNext = ParagraphStyle(name="avenirnext-regular", fontName='AvenirNext-Regular')
+        styleAvenirNext = ParagraphStyle(
+            name="avenirnext-regular",
+            fontName='AvenirNext-Regular',
+        )
 
         styleAvenirNext.alignment = TA_LEFT
         styleAvenirNext.fontSize = style_type_metacopy_size
@@ -694,19 +842,26 @@ class CertificateGen(object):
         y_offset_name_med = pos_name_med_y
         y_offset_name_small = pos_name_small_y
 
-        styleAvenirStudentName = ParagraphStyle(name="avenirnext-demi", fontName='AvenirNext-DemiBold')
+        styleAvenirStudentName = ParagraphStyle(
+            name="avenirnext-demi",
+            fontName='AvenirNext-DemiBold',
+        )
         styleAvenirStudentName.leading = style_type_name_small_size
 
         style = styleAvenirStudentName
 
         html_student_name = html.unescape(student_name)
-        larger_width = stringWidth(html_student_name.decode('utf-8'),
-                                   'AvenirNext-DemiBold', style_type_name_size) / mm
+        larger_width = stringWidth(
+            html_student_name.decode('utf-8'),
+            'AvenirNext-DemiBold',
+            style_type_name_size,
+        ) / mm
         smaller_width = stringWidth(
             html_student_name.decode('utf-8'),
             'AvenirNext-DemiBold', style_type_name_small_size) / mm
 
-        # TODO: get all strings working reshaped and handling bi-directional strings
+        # TODO: get all strings working reshaped
+        # and handling bi-directional strings
         paragraph_string = arabic_reshaper.reshape(student_name.decode('utf-8'))
         paragraph_string = get_display(paragraph_string)
 
@@ -714,14 +869,20 @@ class CertificateGen(object):
         # Switch to using OpenSans if we can
         if self._use_non_latin(student_name):
             style = styleOpenSans
-            larger_width = stringWidth(html_student_name.decode('utf-8'),
-                                       'OpenSans-Regular', style_type_name_size) / mm
+            larger_width = stringWidth(
+                html_student_name.decode('utf-8'),
+                'OpenSans-Regular',
+                style_type_name_size,
+            ) / mm
 
         # if we can't use OpenSans, use Arial
         if self._use_unicode_font(student_name):
             style = styleArial
-            larger_width = stringWidth(html_student_name.decode('utf-8'),
-                                       'Arial Unicode', style_type_name_size) / mm
+            larger_width = stringWidth(
+                html_student_name.decode('utf-8'),
+                'Arial Unicode',
+                style_type_name_size,
+            ) / mm
 
         # if the name is too long, shrink the font size
         if larger_width < MAX_WIDTH:
@@ -743,10 +904,13 @@ class CertificateGen(object):
         paragraph.wrapOn(c, MAX_WIDTH * mm, HEIGHT * mm)
         paragraph.drawOn(c, LEFT_INDENT * mm, y_offset * mm)
 
-        # ELEM: Metacopy - Achievement: successfully completed and received a passing grade in
+        # ELEM: Metacopy - Achievement: successfully completed
+        # and received a passing grade in
         y_offset = pos_metacopy_achivement_y
 
-        paragraph_string = 'successfully completed and received a passing grade in'
+        paragraph_string = (
+            'successfully completed and received a passing grade in'
+        )
 
         paragraph = Paragraph("{0}".format(paragraph_string), styleAvenirNext)
         paragraph.wrapOn(c, WIDTH * mm, HEIGHT * mm)
@@ -756,17 +920,26 @@ class CertificateGen(object):
         y_offset_larger = pos_course_y
         y_offset_smaller = pos_course_small_y
 
-        styleAvenirCourseName = ParagraphStyle(name="avenirnext-demi", fontName='AvenirNext-DemiBold')
+        styleAvenirCourseName = ParagraphStyle(
+            name="avenirnext-demi",
+            fontName='AvenirNext-DemiBold',
+        )
         styleAvenirCourseName.textColor = style_color_name
         if self.template_type == 'verified':
             styleAvenirCourseName.textColor = v_style_color_course
 
         paragraph_string = "{0}: {1}".format(self.course, self.long_course)
         html_paragraph_string = html.unescape(paragraph_string)
-        larger_width = stringWidth(html_paragraph_string.decode('utf-8'),
-                                   'AvenirNext-DemiBold', style_type_course_size) / mm
-        smaller_width = stringWidth(html_paragraph_string.decode('utf-8'),
-                                    'AvenirNext-DemiBold', style_type_course_small_size) / mm
+        larger_width = stringWidth(
+            html_paragraph_string.decode('utf-8'),
+            'AvenirNext-DemiBold',
+            style_type_course_size,
+        ) / mm
+        smaller_width = stringWidth(
+            html_paragraph_string.decode('utf-8'),
+            'AvenirNext-DemiBold',
+            style_type_course_small_size,
+        ) / mm
 
         if larger_width < MAX_WIDTH:
             styleAvenirCourseName.fontSize = style_type_course_size
@@ -793,14 +966,20 @@ class CertificateGen(object):
         paragraph_string = "{2} offered by {0}" \
                            ", an online learning<br /><br />initiative of " \
                            "{1} through edX.".format(
-                               self.org, self.long_org.decode('utf-8'), self.course_association_text)
+                               self.org,
+                               self.long_org.decode('utf-8'),
+                               self.course_association_text,
+                           )
 
         paragraph = Paragraph(paragraph_string, styleAvenirNext)
         paragraph.wrapOn(c, WIDTH * mm, HEIGHT * mm)
         paragraph.drawOn(c, LEFT_INDENT * mm, y_offset * mm)
 
         # ELEM: Footer
-        styleAvenirFooter = ParagraphStyle(name="avenirnext-demi", fontName='AvenirNext-DemiBold')
+        styleAvenirFooter = ParagraphStyle(
+            name="avenirnext-demi",
+            fontName='AvenirNext-DemiBold',
+        )
 
         styleAvenirFooter.alignment = TA_LEFT
         styleAvenirFooter.fontSize = style_type_footer_size
@@ -895,7 +1074,7 @@ class CertificateGen(object):
 
         # STYLE: grid/layout
         LEFT_INDENT = 10  # mm from the left side to write the text
-        MAX_WIDTH = 260  # maximum width on the content in the cert, used for wrapping
+        MAX_WIDTH = 260  # for the content in the cert, used for wrapping
 
         # STYLE: template-wide typography settings
         style_type_name_size = 36
@@ -927,17 +1106,30 @@ class CertificateGen(object):
         y_offset_name_med = pos_name_med_y
         y_offset_name_small = pos_name_small_y
 
-        styleUnicode = ParagraphStyle(name="arial", leading=10, fontName='Arial Unicode')
-        styleGaramondStudentName = ParagraphStyle(name="garamond", fontName='Garamond-Bold')
+        styleUnicode = ParagraphStyle(
+            name="arial",
+            leading=10,
+            fontName='Arial Unicode',
+        )
+        styleGaramondStudentName = ParagraphStyle(
+            name="garamond",
+            fontName='Garamond-Bold',
+        )
         styleGaramondStudentName.leading = style_type_name_small_size
 
         style = styleGaramondStudentName
 
         html_student_name = html.unescape(student_name)
-        larger_width = stringWidth(html_student_name.decode('utf-8'),
-                                   'Garamond-Bold', style_type_name_size) / mm
-        smaller_width = stringWidth(html_student_name.decode('utf-8'),
-                                    'Garamond-Bold', style_type_name_small_size) / mm
+        larger_width = stringWidth(
+            html_student_name.decode('utf-8'),
+            'Garamond-Bold',
+            style_type_name_size,
+        ) / mm
+        smaller_width = stringWidth(
+            html_student_name.decode('utf-8'),
+            'Garamond-Bold',
+            style_type_name_small_size,
+        ) / mm
 
         paragraph_string = arabic_reshaper.reshape(student_name.decode('utf-8'))
         paragraph_string = get_display(paragraph_string)
@@ -946,8 +1138,11 @@ class CertificateGen(object):
         # if we can't use it, use Arial
         if self._use_unicode_font(student_name):
             style = styleUnicode
-            larger_width = stringWidth(html_student_name.decode('utf-8'),
-                                       'Arial Unicode', style_type_name_size) / mm
+            larger_width = stringWidth(
+                html_student_name.decode('utf-8'),
+                'Arial Unicode',
+                style_type_name_size,
+            ) / mm
 
         # if the name is too long, shrink the font size
         if larger_width < MAX_WIDTH:
@@ -999,7 +1194,14 @@ class CertificateGen(object):
         outputStream.close()
         return (download_uuid, verify_uuid, download_url)
 
-    def _generate_verification_page(self, name, filename, output_dir, verify_uuid, download_url):
+    def _generate_verification_page(
+        self,
+        name,
+        filename,
+        output_dir,
+        verify_uuid,
+        download_url,
+    ):
         """
         This generates the gpg signature and the
         verification files including
@@ -1024,7 +1226,11 @@ class CertificateGen(object):
 
         # generate signature
         signature_filename = os.path.basename(filename) + ".sig"
-        signature_filename = os.path.join(output_dir, verify_uuid, signature_filename)
+        signature_filename = os.path.join(
+            output_dir,
+            verify_uuid,
+            signature_filename,
+        )
         self._ensure_dir(signature_filename)
         gpg = gnupg.GPG(gnupghome=settings.CERT_GPG_DIR)
         gpg.encoding = 'utf-8'
@@ -1034,16 +1240,22 @@ class CertificateGen(object):
             f.write(signed_data.encode('utf-8'))
 
         # create the validation page
-        signature_download_url = "{verify_url}/{verify_path}/{verify_uuid}/{verify_filename}".format(
-            verify_url=settings.CERT_VERIFY_URL,
-            verify_path=S3_VERIFY_PATH,
-            verify_uuid=verify_uuid,
-            verify_filename=os.path.basename(signature_filename))
+        signature_download_url = (
+            "{verify_url}/{verify_path}/{verify_uuid}/{verify_filename}".format(
+                verify_url=settings.CERT_VERIFY_URL,
+                verify_path=S3_VERIFY_PATH,
+                verify_uuid=verify_uuid,
+                verify_filename=os.path.basename(signature_filename),
+            )
+        )
 
-        verify_page_url = "{verify_url}/{verify_path}/{verify_uuid}/verify.html".format(
-            verify_url=settings.CERT_VERIFY_URL,
-            verify_path=S3_VERIFY_PATH,
-            verify_uuid=verify_uuid)
+        verify_page_url = (
+            "{verify_url}/{verify_path}/{verify_uuid}/verify.html".format(
+                verify_url=settings.CERT_VERIFY_URL,
+                verify_path=S3_VERIFY_PATH,
+                verify_uuid=verify_uuid,
+            )
+        )
 
         type_map = {
             'verified': {'type': 'idverified', 'type_name': 'Verified'},
@@ -1203,10 +1415,26 @@ class CertificateGen(object):
         addMapping('SourceSansPro-Light', 1, 1, 'SourceSansPro-SemiboldItalic')
         addMapping('SourceSansPro-Regular', 0, 0, 'SourceSansPro-Regular')
 
-        styleArial = ParagraphStyle(name="arial", leading=10, fontName='Arial Unicode')
-        styleOpenSansLight = ParagraphStyle(name="opensans-light", leading=10, fontName='OpenSans-Light')
-        styleSourceSansPro = ParagraphStyle(name="sourcesans-regular", leading=10, fontName='SourceSansPro-Regular')
-        styleSourceSansProLight = ParagraphStyle(name="sourcesans-light", leading=10, fontName='SourceSansPro-Light')
+        styleArial = ParagraphStyle(
+            name="arial",
+            leading=10,
+            fontName='Arial Unicode',
+        )
+        styleOpenSansLight = ParagraphStyle(
+            name="opensans-light",
+            leading=10,
+            fontName='OpenSans-Light',
+        )
+        styleSourceSansPro = ParagraphStyle(
+            name="sourcesans-regular",
+            leading=10,
+            fontName='SourceSansPro-Regular',
+        )
+        styleSourceSansProLight = ParagraphStyle(
+            name="sourcesans-light",
+            leading=10,
+            fontName='SourceSansPro-Light',
+        )
 
         # Text is overlayed top to bottom
         #   * Issued date (top right corner)
@@ -1237,8 +1465,17 @@ class CertificateGen(object):
             paragraph_string = "{0}".format(self.issued_date)
 
         # Right justified so we compute the width
-        width = stringWidth(paragraph_string, 'SourceSansPro-SemiboldItalic', style.fontSize) / mm
-        paragraph = Paragraph("<i><b>{0}</b></i>".format(paragraph_string), style)
+        width = stringWidth(
+            paragraph_string,
+            'SourceSansPro-SemiboldItalic',
+            style.fontSize,
+        ) / mm
+        paragraph = Paragraph(
+            "<i><b>{0}</b></i>".format(
+                paragraph_string,
+            ),
+            style,
+        )
         paragraph.wrapOn(c, WIDTH * mm, HEIGHT * mm)
         paragraph.drawOn(c, (WIDTH - DATE_INDENT - width) * mm, 159 * mm)
 
@@ -1259,12 +1496,18 @@ class CertificateGen(object):
         # to Arial if there are unusual characters
         style = styleOpenSansLight
         style.fontSize = 34
-        width = stringWidth(student_name.decode('utf-8'), 'OpenSans-Bold', style.fontSize) / mm
+        width = stringWidth(
+            student_name.decode('utf-8'),
+            'OpenSans-Bold', style.fontSize,
+        ) / mm
         paragraph_string = "<b>{0}</b>".format(student_name)
 
         if self._use_unicode_font(student_name):
             style = styleArial
-            width = stringWidth(student_name.decode('utf-8'), 'Arial Unicode', style.fontSize) / mm
+            width = stringWidth(
+                student_name.decode('utf-8'),
+                'Arial Unicode', style.fontSize,
+            ) / mm
             # There is no bold styling for Arial :(
             paragraph_string = "{0}".format(student_name)
 
@@ -1286,15 +1529,22 @@ class CertificateGen(object):
 
         # Successfully completed
         paragraph_string_interstitial = ' '
-        successfully_completed = "has successfully completed{0}a free online offering of"
+        successfully_completed = (
+            "has successfully completed{0}a free online offering of"
+        )
 
         # Add distinction here
         if grade:
-            tmp = self.interstitial_texts.get(grade, paragraph_string_interstitial)
+            tmp = self.interstitial_texts.get(
+                grade,
+                paragraph_string_interstitial,
+            )
             if tmp != paragraph_string_interstitial:
                 tmp = ' <b>' + tmp + '</b> '
             paragraph_string_interstitial = tmp
-        paragraph_string = successfully_completed.format(paragraph_string_interstitial)
+        paragraph_string = successfully_completed.format(
+            paragraph_string_interstitial,
+        )
 
         paragraph = Paragraph(paragraph_string, styleSourceSansPro)
         paragraph.wrapOn(c, WIDTH * mm, HEIGHT * mm)
@@ -1350,8 +1600,16 @@ class CertificateGen(object):
 
         return (download_uuid, verify_uuid, download_url)
 
-    def _generate_stanford_cme_certificate(self, student_name, download_dir, verify_dir, filename=TARGET_FILENAME,
-                                           grade=None, designation=None, generate_date=None):
+    def _generate_stanford_cme_certificate(
+        self,
+        student_name,
+        download_dir,
+        verify_dir,
+        filename=TARGET_FILENAME,
+        grade=None,
+        designation=None,
+        generate_date=None,
+    ):
         """Generate a PDF certificate, signature and html files for validation.
 
         REQUIRED PARAMETERS:
@@ -1376,7 +1634,12 @@ class CertificateGen(object):
         WIDTH, HEIGHT = landscape(letter)   # values in points, multiply by mm
 
         download_uuid = uuid.uuid4().hex
-        download_url = "https://{0}.s3.amazonaws.com/{1}/{2}/{3}".format(BUCKET, S3_CERT_PATH, download_uuid, filename)
+        download_url = "https://{0}.s3.amazonaws.com/{1}/{2}/{3}".format(
+            BUCKET,
+            S3_CERT_PATH,
+            download_uuid,
+            filename,
+        )
         filename = os.path.join(download_dir, download_uuid, filename)
         self._ensure_dir(filename)
 
@@ -1400,9 +1663,24 @@ class CertificateGen(object):
         addMapping('DroidSerif', 1, 0, 'DroidSerif-Bold')
         addMapping('DroidSerif', 1, 1, 'DroidSerif-BoldItalic')
 
-        styleArial = ParagraphStyle(name="arial", leading=10, fontName='Arial Unicode', allowWidows=0)
-        styleOpenSansLight = ParagraphStyle(name="opensans-light", leading=10, fontName='OpenSans-Light', allowWidows=0)
-        styleDroidSerif = ParagraphStyle(name="droidserif", leading=10, fontName='DroidSerif', allowWidows=0)
+        styleArial = ParagraphStyle(
+            name="arial",
+            leading=10,
+            fontName='Arial Unicode',
+            allowWidows=0,
+        )
+        styleOpenSansLight = ParagraphStyle(
+            name="opensans-light",
+            leading=10,
+            fontName='OpenSans-Light',
+            allowWidows=0,
+        )
+        styleDroidSerif = ParagraphStyle(
+            name="droidserif",
+            leading=10,
+            fontName='DroidSerif',
+            allowWidows=0,
+        )
 
         # This file is overlaid on the template certificate
         overlay_pdf_buffer = StringIO.StringIO()
@@ -1425,9 +1703,11 @@ class CertificateGen(object):
         # Student name
 
         # These are ordered by preference; cf. font_for_string() above
-        fontlist = [('DroidSerif', 'DroidSerif.ttf', styleDroidSerif),
-                    ('OpenSans-Light', 'OpenSans-Light.ttf', styleOpenSansLight),
-                    ('Arial Unicode', 'Ariel Unicode.ttf', styleArial)]
+        fontlist = [
+            ('DroidSerif', 'DroidSerif.ttf', styleDroidSerif),
+            ('OpenSans-Light', 'OpenSans-Light.ttf', styleOpenSansLight),
+            ('Arial Unicode', 'Ariel Unicode.ttf', styleArial),
+        ]
 
         (fonttag, fontfile, style) = font_for_string(fontlist, student_name)
         style.alignment = TA_CENTER
@@ -1439,18 +1719,32 @@ class CertificateGen(object):
 
         while width > max_width:
             style.fontSize = fontsize
-            width = stringWidth(student_name.decode('utf-8'), fonttag, fontsize)
+            width = stringWidth(
+                student_name.decode('utf-8'),
+                fonttag,
+                fontsize,
+            )
             if nameYOffset > 140:
                 nameYOffset = nameYOffset - math.floor((36 - fontsize) / 12)
             fontsize -= 1
 
-        draw_centered_text("<b>{0}</b>".format(student_name), style, nameYOffset)
+        draw_centered_text(
+            "<b>{0}</b>".format(student_name),
+            style,
+            nameYOffset,
+        )
 
         # Enduring material titled
         style = styleDroidSerif
         style.alignment = TA_CENTER
         style.fontSize = 28
-        draw_centered_text("<b>{0}</b>".format(self.long_course.decode('utf-8')), style, 119)
+        draw_centered_text(
+            "<b>{0}</b>".format(
+                self.long_course.decode('utf-8'),
+            ),
+            style,
+            119,
+        )
 
         # Issued on date...
         style.fontSize = 26

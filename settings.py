@@ -34,11 +34,13 @@ DEBUG = False
 # This needs to be set on MacOS or anywhere you want logging to simply go
 # to an output file.
 LOGGING_DEV_ENV = True
-LOGGING = get_logger_config(ENV_ROOT,
-                            logging_env="dev",
-                            local_loglevel="INFO",
-                            dev_env=LOGGING_DEV_ENV,
-                            debug=False)
+LOGGING = get_logger_config(
+    ENV_ROOT,
+    logging_env="dev",
+    local_loglevel="INFO",
+    dev_env=LOGGING_DEV_ENV,
+    debug=False,
+)
 
 # Default for the gpg dir
 # Specify the CERT_KEY_ID before running the test suite
@@ -97,16 +99,21 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     S3_UPLOAD = ENV_TOKENS.get('S3_UPLOAD', S3_UPLOAD)
     S3_VERIFY_PATH = ENV_TOKENS.get('S3_VERIFY_PATH', S3_VERIFY_PATH)
     CERTS_ARE_CALLED = ENV_TOKENS.get('CERTS_ARE_CALLED', CERTS_ARE_CALLED)
-    CERTS_ARE_CALLED_PLURAL = ENV_TOKENS.get('CERTS_ARE_CALLED_PLURAL', CERTS_ARE_CALLED_PLURAL)
+    CERTS_ARE_CALLED_PLURAL = ENV_TOKENS.get(
+        'CERTS_ARE_CALLED_PLURAL',
+        CERTS_ARE_CALLED_PLURAL,
+    )
     LOG_DIR = ENV_TOKENS.get('LOG_DIR', '/var/tmp')
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
     LOGGING_DEV_ENV = ENV_TOKENS.get('LOGGING_DEV_ENV', True)
-    LOGGING = get_logger_config(LOG_DIR,
-                                logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
-                                local_loglevel=local_loglevel,
-                                debug=False,
-                                dev_env=LOGGING_DEV_ENV,
-                                service_variant=os.environ.get('SERVICE_VARIANT', None))
+    LOGGING = get_logger_config(
+        LOG_DIR,
+        logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
+        local_loglevel=local_loglevel,
+        debug=False,
+        dev_env=LOGGING_DEV_ENV,
+        service_variant=os.environ.get('SERVICE_VARIANT', None),
+    )
     CERT_PRIVATE_DIR = ENV_TOKENS.get('CERT_PRIVATE_DIR', CERT_PRIVATE_DIR)
 
 # This is the base URL used for logging CERT uploads to s3
@@ -114,8 +121,12 @@ CERT_URL = CERT_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 # This is the base URL that will be displayed to the user in the dashboard
 # It's different than CERT_URL because because CERT_URL will not have a valid
 # SSL certificate. # FIXME: confirm whether this is true
-CERT_DOWNLOAD_URL = CERT_DOWNLOAD_URL or 'https://{}.s3.amazonaws.com'.format(CERT_BUCKET)
-CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
+CERT_DOWNLOAD_URL = CERT_DOWNLOAD_URL or 'https://{}.s3.amazonaws.com'.format(
+    CERT_BUCKET,
+)
+CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(
+    CERT_BUCKET,
+)
 
 if os.path.isfile(ENV_ROOT / "auth.json"):
     with open(ENV_ROOT / "auth.json") as env_file:

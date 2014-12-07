@@ -43,17 +43,40 @@ def test_cert_gen():
             'John Smith', upload=False, copy_to_webroot=True,
             cert_web_root=tmpdir, cleanup=True)
 
-        # If the settings we're testing have VERIFY turned off, skip those tests, too
+        # If the settings we're testing have VERIFY turned off,
+        # skip those tests, too
         if settings.CERT_DATA[course_id].get('VERIFY', True) and verify_uuid:
-            verify_files = os.listdir(os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid))
-            download_files = os.listdir(os.path.join(tmpdir, S3_CERT_PATH, download_uuid))
+            verify_files = os.listdir(
+                os.path.join(
+                    tmpdir,
+                    S3_VERIFY_PATH,
+                    verify_uuid,
+                ),
+            )
+            download_files = os.listdir(
+                os.path.join(
+                    tmpdir,
+                    S3_CERT_PATH,
+                    download_uuid,
+                ),
+            )
 
             # All the verification files were created correctly
             assert_true(set(verify_files) == VERIFY_FILES)
 
             # The detached signature is valid
-            pdf = os.path.join(tmpdir, S3_CERT_PATH, download_uuid, CERT_FILENAME)
-            sig = os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid, CERT_FILESIG)
+            pdf = os.path.join(
+                tmpdir,
+                S3_CERT_PATH,
+                download_uuid,
+                CERT_FILENAME,
+            )
+            sig = os.path.join(
+                tmpdir,
+                S3_VERIFY_PATH,
+                verify_uuid,
+                CERT_FILESIG,
+            )
             gpg = gnupg.GPG(gnupghome=settings.CERT_GPG_DIR)
             with open(sig) as f:
                 v = gpg.verify_file(f, pdf)
@@ -68,12 +91,19 @@ def test_cert_gen():
 
 
 def test_cert_names():
-    """Generate certificates for all names in NAMES without saving or uploading"""
+    """
+    Generate certificates for all names in NAMES
+
+    Nothing is saved or uploaded.
+    """
     # XXX: This is meant to catch unicode rendering problems, but does it?
     course_id = settings.CERT_DATA.keys()[0]
     for name in NAMES:
         cert = CertificateGen(course_id)
-        (download_uuid, verify_uuid, download_url) = cert.create_and_upload(name, upload=False)
+        (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+            name,
+            upload=False,
+        )
 
 
 def test_cert_upload():
@@ -81,7 +111,9 @@ def test_cert_upload():
     if not settings.CERT_AWS_ID or not settings.CERT_AWS_KEY:
         raise SkipTest
     cert = CertificateGen(settings.CERT_DATA.keys()[0])
-    (download_uuid, verify_uuid, download_url) = cert.create_and_upload('John Smith')
+    (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+        'John Smith',
+    )
     r = urllib2.urlopen(download_url)
     with tempfile.NamedTemporaryFile(delete=True) as f:
         f.write(r.read())

@@ -14,7 +14,7 @@ from queue import XQueuePullManager
 import settings
 
 logging.config.dictConfig(settings.LOGGING)
-log = logging.getLogger('certificates: ' + __name__)
+LOG = logging.getLogger('certificates: ' + __name__)
 
 
 # how long to wait in seconds after an xqueue poll
@@ -70,11 +70,11 @@ def main():
     while True:
 
         if len(manager) == 0:
-            log.debug("{0} has no jobs".format(str(manager)))
+            LOG.debug("{0} has no jobs".format(str(manager)))
             time.sleep(SLEEP_TIME)
             continue
         else:
-            log.debug('queue length: {0}'.format(len(manager)))
+            LOG.debug('queue length: {0}'.format(len(manager)))
 
         xqueue_body = {}
         xqueue_header = ''
@@ -87,7 +87,7 @@ def main():
         name = ''
 
         certdata = manager.pop()
-        log.debug('xqueue response: {0}'.format(certdata))
+        LOG.debug('xqueue response: {0}'.format(certdata))
         try:
             xqueue_body = json.loads(certdata['xqueue_body'])
             xqueue_header = json.loads(certdata['xqueue_header'])
@@ -119,7 +119,7 @@ def main():
                     continue
 
         except (TypeError, ValueError, KeyError, IOError) as e:
-            log.critical(
+            LOG.critical(
                 'Unable to parse queue submission ({0}) : {1}'.format(
                     e,
                     certdata,
@@ -131,7 +131,7 @@ def main():
                 continue
 
         try:
-            log.info(
+            LOG.info(
                 "Generating certificate for {username} ({name}), "
                 "in {course_id}, with grade {grade}".format(
                     username=username.encode('utf-8'),
@@ -169,7 +169,7 @@ def main():
                 )
             )
 
-            log.critical(
+            LOG.critical(
                 'An error occurred during '
                 'certificate generation {reason}'.format(
                     reason=error_reason,
@@ -208,7 +208,7 @@ def main():
                 'url': download_url,
             }),
         }
-        log.info("Posting result to the LMS: {0}".format(xqueue_reply))
+        LOG.info("Posting result to the LMS: {0}".format(xqueue_reply))
         manager.put(xqueue_reply)
 
 

@@ -190,7 +190,7 @@ class XQueuePullManager(object):
             request = method(url, **kwargs)
             response = json.loads(request.text)
             validate(response)
-        except (InvalidReturnCode, ConnectionError, Timeout) as error:
+        except (InvalidReturnCode, ConnectionError, Timeout, ValueError) as error:
             LOG.critical(error_message, error)
             raise
         return response

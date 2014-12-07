@@ -9,8 +9,9 @@ pyPdf2==1.19
 python-daemon==1.6
 python-gnupg==0.3.4
 reportlab==2.6
-requests==0.14.1
+requests==2.5.0
 simples3==1.0-alpha
 wsgiref==0.1.2
 python-bidi==0.3.4
 mock==1.0.1
+responses==0.3.0

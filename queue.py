@@ -39,7 +39,8 @@ def validate(response):
     """
     if response['return_code'] != 0:
         # TODO: create message constant
-        LOG.critical("response: %s", response.text)
+        LOG.critical("response: %s", response)
+        # LOG.critical("response: %s", response.text)
         raise InvalidReturnCode(ERROR_VALIDATE.format(
             response['return_code'],
             str(response),
@@ -157,11 +158,11 @@ class XQueuePullManager(object):
         :raises: ConnectionError, Timeout, Exception
         :returns: request.Session
         """
-        session = requests.session(
-            auth=HTTPBasicAuth(
-                auth_basic[0],
-                auth_basic[1],
-            ),
+        session = requests.Session(
+            # auth=HTTPBasicAuth(
+            #     auth_basic[0],
+            #     auth_basic[1],
+            # ),
         )
         self._request(
             session.post,
@@ -188,6 +189,7 @@ class XQueuePullManager(object):
         try:
             request = method(url, **kwargs)
             response = json.loads(request.text)
+            print(response)
             validate(response)
         except (InvalidReturnCode, ConnectionError, Timeout) as error:
             LOG.critical(error_message, error)

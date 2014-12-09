@@ -70,9 +70,6 @@ def main():
     """
     pdf_dir = TMP_GEN_DIR
     copy_dir = TMP_GEN_DIR + "+copy"
-    if args.report_file:
-        # ensure we can open the output file
-        file_report = open(args.report_file, 'wb')
 
     # Remove files if they exist
     for d in [pdf_dir, copy_dir]:
@@ -143,10 +140,10 @@ def main():
 
     # output a report of what was generated and for whom
     if args.report_file:
-        certificate_writer = csv.writer(file_report, quoting=csv.QUOTE_MINIMAL)
-        for row in certificate_data:
-            certificate_writer.writerow(row)
-        file_report.close()
+        with open(args.report_file, 'wb') as file_report:
+            certificate_writer = csv.writer(file_report, quoting=csv.QUOTE_MINIMAL)
+            for row in certificate_data:
+                certificate_writer.writerow(row)
     else:
         for row in certificate_data:
             print '\t'.join(row)

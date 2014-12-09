@@ -50,8 +50,11 @@ def parse_args(args=sys.argv[1:]):
     parser.add_argument('-R', '--random-title', help='add random title to name')
     parser.add_argument('-f', '--input-file',
                         help='optional input file for names, one name per line')
-    parser.add_argument('-w', '--output-file',
-                        help='optional output file for certificate')
+    parser.add_argument(
+        '-r',
+        '--report-file',
+        help='optional report file for generated output',
+    )
     parser.add_argument('-G', '--grade-text',
                         help='optional grading label to apply')
 
@@ -67,9 +70,9 @@ def main():
     """
     pdf_dir = TMP_GEN_DIR
     copy_dir = TMP_GEN_DIR + "+copy"
-    if args.output_file:
+    if args.report_file:
         # ensure we can open the output file
-        output_f = open(args.output_file, 'bw')
+        file_report = open(args.report_file, 'wb')
 
     # Remove files if they exist
     for d in [pdf_dir, copy_dir]:
@@ -139,11 +142,11 @@ def main():
             print "Created {0}".format(copy_dest)
 
     # output a report of what was generated and for whom
-    if args.output_file:
-        certificate_writer = csv.writer(output_f, quoting=csv.QUOTE_MINIMAL)
+    if args.report_file:
+        certificate_writer = csv.writer(file_report, quoting=csv.QUOTE_MINIMAL)
         for row in certificate_data:
             certificate_writer.writerow(row)
-        output_f.close()
+        file_report.close()
     else:
         for row in certificate_data:
             print '\t'.join(row)

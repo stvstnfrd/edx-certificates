@@ -179,6 +179,8 @@ class XQueuePullManager(object):
         :type error_message: str
         """
         try:
+            # TODO: should we rely on ~/.netrc ?
+            # at least, we should document feature
             request = method(url, **kwargs)
         except (ConnectionError, Timeout) as error:
             LOG.critical(error_message, error)

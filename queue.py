@@ -19,7 +19,7 @@ ERROR_PARSE = "Unable to parse queue message: %s response: %s"
 ERROR_POST_RESPONSE = "Connection error posting response to the LMS: %s"
 ERROR_VALIDATE = "Invalid return code ({0}): {1}"
 MESSAGE_GET_RESPONSE = 'response from get_submission: %s'
-MESSAGE_PUT_REQUEST = 'Response: %s'
+MESSAGE_RESPONSE = 'Response: %s'
 
 
 class InvalidReturnCode(Exception):
@@ -38,8 +38,7 @@ def validate(response):
     :type response: dict
     """
     if response['return_code'] != 0:
-        # TODO: create message constant
-        LOG.critical("response: %s", response)
+        LOG.critical(MESSAGE_RESPONSE, response)
         # LOG.critical("response: %s", response.text)
         raise InvalidReturnCode(ERROR_VALIDATE.format(
             response['return_code'],
@@ -131,7 +130,7 @@ class XQueuePullManager(object):
             error_message=ERROR_POST_RESPONSE,
             data=xqueue_reply,
         )
-        LOG.info(MESSAGE_PUT_REQUEST, response)
+        LOG.info(MESSAGE_RESPONSE, response)
         return response
 
     def _get_method_url(self, method):

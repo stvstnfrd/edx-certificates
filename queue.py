@@ -6,7 +6,6 @@ import json
 
 import logging
 import requests
-from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, Timeout
 
 LOG = logging.getLogger(__name__)
@@ -64,20 +63,18 @@ class XQueuePullManager(object):
         :type auth_basic: tuple
         :param auth_xqueue: A tuple of (username, password)
         :type auth_xqueue: tuple
-        :raises: ConnectionError, Timeout, Exception
         """
         self.url = url
         self.name = name
-        self.session = self._login(
-            auth_basic,
-            auth_xqueue,
-        )
+        self.auth_basic = auth_basic
+        self.auth_xqueue = auth_xqueue
+        self.session = None
 
     def __len__(self):
         """
         Returns the length of the XQueue
         """
-
+        self._try_login()
         response = self._request(
             self.session.get,
             self._get_method_url('get_queuelen'),
@@ -103,7 +100,7 @@ class XQueuePullManager(object):
         :raises: ConnectionError, Timeout, ValueError, KeyError, Exception
         :returns: dict -- a single submission
         """
-
+        self._try_login()
         response = self._request(
             self.session.get,
             self._get_method_url('get_submission'),
@@ -123,7 +120,7 @@ class XQueuePullManager(object):
         :type xqueue_reply: dict
         :raises: ConnectionError, Timeout, Exception
         """
-
+        self._try_login()
         response = self._request(
             self.session.post,
             self._get_method_url('put_result'),
@@ -146,7 +143,8 @@ class XQueuePullManager(object):
             method=method,
         )
 
-    def _login(self, auth_basic, auth_xqueue):
+    # TODO: should this return anything?
+    def _try_login(self):
         """
         Login to the XQueue server
 
@@ -155,24 +153,19 @@ class XQueuePullManager(object):
         :param auth_xqueue: A tuple of (username, password)
         :type auth_xqueue: tuple
         :raises: ConnectionError, Timeout, Exception
-        :returns: request.Session
         """
-        session = requests.Session(
-            # auth=HTTPBasicAuth(
-            #     auth_basic[0],
-            #     auth_basic[1],
-            # ),
-        )
-        self._request(
-            session.post,
-            self._get_method_url('login'),
-            error_message=ERROR_CONNECT,
-            data={
-                'username': auth_xqueue[0],
-                'password': auth_xqueue[1],
-            },
-        )
-        return session
+        if not self.session:
+            self.session = requests.Session()
+            self.session.auth = self.auth_basic
+            self._request(
+                self.session.post,
+                self._get_method_url('login'),
+                error_message=ERROR_CONNECT,
+                data={
+                    'username': self.auth_xqueue[0],
+                    'password': self.auth_xqueue[1],
+                },
+            )
 
     def _request(self, method, url, error_message, **kwargs):
         """
@@ -187,11 +180,18 @@ class XQueuePullManager(object):
         """
         try:
             request = method(url, **kwargs)
-            response = json.loads(request.text)
+        except (ConnectionError, Timeout) as error:
+            LOG.critical(error_message, error)
+            raise
+        try:
+            # response = json.loads(request.text)
+            response = request.json()
+        except ValueError as error:
+            LOG.critical(error_message, error)
+            raise
+        try:
             validate(response)
-        except (
-            InvalidReturnCode, ConnectionError, Timeout, ValueError,
-        ) as error:
+        except InvalidReturnCode as error:
             LOG.critical(error_message, error)
             raise
         return response

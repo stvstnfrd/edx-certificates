@@ -18,7 +18,7 @@ from tests.test_data import NAMES
 
 
 logging.config.dictConfig(settings.LOGGING)
-LOG = logging.getLogger('certificates.' + __name__)
+LOG = logging.getLogger('certificates.create_pdfs')
 
 description = """
   Sample certificate generator

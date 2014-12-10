@@ -151,7 +151,7 @@ def main():
                     certificate_writer.writerow(row)
             should_write_report_to_stdout = False
         except IOError as err:
-            LOG.exception("Unable to open report file: %s", err)
+            LOG.exception("Unable to open report file: %s", err.strerror)
     if should_write_report_to_stdout:
         for row in certificate_data:
             print '\t'.join(row)

@@ -6,6 +6,7 @@ PDFs by default will be dropped in TMP_GEN_DIR for review
 """
 from argparse import ArgumentParser, RawTextHelpFormatter
 import csv
+import logging
 import os
 import random
 import shutil
@@ -15,6 +16,9 @@ from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME, TMP_GEN_DIR
 import settings
 from tests.test_data import NAMES
 
+
+logging.config.dictConfig(settings.LOGGING)
+LOG = logging.getLogger('certificates.' + __name__)
 
 description = """
   Sample certificate generator
@@ -138,13 +142,17 @@ def main():
                 raise
             print "Created {0}".format(copy_dest)
 
-    # output a report of what was generated and for whom
+    should_write_report_to_stdout = True
     if args.report_file:
-        with open(args.report_file, 'wb') as file_report:
-            certificate_writer = csv.writer(file_report, quoting=csv.QUOTE_MINIMAL)
-            for row in certificate_data:
-                certificate_writer.writerow(row)
-    else:
+        try:
+            with open(args.report_file, 'wb') as file_report:
+                certificate_writer = csv.writer(file_report, quoting=csv.QUOTE_MINIMAL)
+                for row in certificate_data:
+                    certificate_writer.writerow(row)
+            should_write_report_to_stdout = False
+        except IOError as error:
+            LOG.exception("Unable to open report file: %s", args.report_file)
+    if should_write_report_to_stdout:
         for row in certificate_data:
             print '\t'.join(row)
 

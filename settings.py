@@ -49,9 +49,6 @@ CERT_KEY_ID = 'FEF8D954'
 # or leave blank to skip gpg signing
 # CERT_KEY_ID = ''
 
-# Specify the default name of the certificate PDF
-CERT_FILENAME = 'Certificate.pdf'
-
 # Update this with your bucket name
 CERT_BUCKET = 'verify-test.edx.org'
 CERT_WEB_ROOT = '/var/tmp'
@@ -90,7 +87,6 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
     CERT_KEY_ID = ENV_TOKENS.get('CERT_KEY_ID', CERT_KEY_ID)
     CERT_BUCKET = ENV_TOKENS.get('CERT_BUCKET', CERT_BUCKET)
-    CERT_FILENAME = ENV_TOKENS.get('CERT_FILENAME', CERT_FILENAME)
     CERT_URL = ENV_TOKENS.get('CERT_URL', '')
     CERT_DOWNLOAD_URL = ENV_TOKENS.get('CERT_DOWNLOAD_URL', "")
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")

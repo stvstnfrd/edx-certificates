@@ -50,7 +50,7 @@ logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)
 S3_CERT_PATH = 'downloads'
 S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')
-TARGET_FILENAME = getattr(settings, 'CERT_FILENAME', 'Certificate.pdf')
+TARGET_FILENAME = settings.get('CERT_FILENAME')
 TMP_GEN_DIR = settings.get('TMP_GEN_DIR')
 CERTS_ARE_CALLED = getattr(settings, 'CERTS_ARE_CALLED', 'certificate')
 CERTS_ARE_CALLED_PLURAL = getattr(settings, 'CERTS_ARE_CALLED_PLURAL', 'certificates')

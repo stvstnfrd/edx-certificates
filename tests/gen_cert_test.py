@@ -14,8 +14,8 @@ from gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
 from test_data import NAMES
 
 
-CERT_FILENAME = settings.CERT_FILENAME
-CERT_FILESIG = settings.CERT_FILENAME + '.sig'
+CERT_FILENAME = settings.get('CERT_FILENAME')
+CERT_FILESIG = CERT_FILENAME + '.sig'
 VERIFY_FILES = set(['valid.html', 'verify.html'])
 DOWNLOAD_FILES = set([])
 

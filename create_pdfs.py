@@ -12,13 +12,14 @@ import random
 import shutil
 import sys
 
-from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME, TMP_GEN_DIR
+from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME
 import settings
 from tests.test_data import NAMES
 
 
 logging.config.dictConfig(settings.LOGGING)
 LOG = logging.getLogger('certificates.create_pdfs')
+TMP_GEN_DIR = settings.get('TMP_GEN_DIR')
 
 description = """
   Sample certificate generator

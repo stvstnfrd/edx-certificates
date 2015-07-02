@@ -210,7 +210,7 @@ class CertificateGen(object):
 
         # lookup long names from the course_id
         try:
-            self.long_org = long_org or cert_data.get('LONG_ORG', '').encode('utf-8') or settings.DEFAULT_ORG
+            self.long_org = long_org or cert_data.get('LONG_ORG', '').encode('utf-8') or settings.get('DEFAULT_ORG')
             self.long_course = long_course or cert_data.get('LONG_COURSE', '').encode('utf-8')
             self.issued_date = issued_date or cert_data.get('ISSUED_DATE', '').encode('utf-8') or 'ROLLING'
             self.interstitial_texts = collections.defaultdict(interstitial_factory())
@@ -304,7 +304,10 @@ class CertificateGen(object):
         my_certs_path = os.path.join(certificates_path, download_uuid)
         my_verify_path = os.path.join(verify_path, verify_uuid)
         if upload:
-            s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
+            s3_conn = boto.connect_s3(
+                settings.get('CERT_AWS_ID'),
+                settings.get('CERT_AWS_KEY')
+            )
             bucket = s3_conn.get_bucket(BUCKET)
         if upload or copy_to_webroot:
             for subtree in (my_certs_path, my_verify_path):

@@ -78,7 +78,7 @@ def test_cert_names():
 
 def test_cert_upload():
     """Check here->S3->http round trip."""
-    if not settings.CERT_AWS_ID or not settings.CERT_AWS_KEY:
+    if not settings.get('CERT_AWS_ID ') or not settings.get('CERT_AWS_KEY'):
         raise SkipTest
     cert = CertificateGen(settings.CERT_DATA.keys()[0])
     (download_uuid, verify_uuid, download_url) = cert.create_and_upload('John Smith')

@@ -52,11 +52,6 @@ CERT_KEY_ID = 'FEF8D954'
 # Specify the default name of the certificate PDF
 CERT_FILENAME = 'Certificate.pdf'
 
-# Specify these credentials before running the test suite
-# or ensure that your .boto file has write permission
-# to the bucket.
-CERT_AWS_ID = None
-CERT_AWS_KEY = None
 # Update this with your bucket name
 CERT_BUCKET = 'verify-test.edx.org'
 CERT_WEB_ROOT = '/var/tmp'
@@ -125,26 +120,6 @@ CERT_URL = CERT_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 # SSL certificate. # FIXME: confirm whether this is true
 CERT_DOWNLOAD_URL = CERT_DOWNLOAD_URL or 'https://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
-
-DEFAULT_ORG = "Some Institution"
-QUEUE_AUTH_USER = None
-QUEUE_AUTH_PASS = None
-QUEUE_USER = None
-QUEUE_PASS = None
-QUEUE_URL = 'https://example.com'
-QUEUE_NAME = None
-
-if os.path.isfile(ENV_ROOT / "auth.json"):
-    with open(ENV_ROOT / "auth.json") as env_file:
-        ENV_TOKENS = json.load(env_file)
-    QUEUE_USER = ENV_TOKENS.get('QUEUE_USER', 'lms')
-    QUEUE_PASS = ENV_TOKENS.get('QUEUE_PASS')
-    QUEUE_AUTH_USER = ENV_TOKENS.get('QUEUE_AUTH_USER', '')
-    QUEUE_AUTH_PASS = ENV_TOKENS.get('QUEUE_AUTH_PASS', '')
-    CERT_AWS_KEY = ENV_TOKENS.get('CERT_AWS_KEY', CERT_AWS_KEY)
-    CERT_AWS_ID = ENV_TOKENS.get('CERT_AWS_ID', CERT_AWS_ID)
-    DEFAULT_ORG = ENV_TOKENS.get('DEFAULT_ORG', DEFAULT_ORG)
-
 
 # Use the custom CERT_PRIVATE_DIR for paths to the
 # template sub directory and the cert data config

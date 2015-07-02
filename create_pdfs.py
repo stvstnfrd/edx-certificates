@@ -110,8 +110,8 @@ def main():
             cert = CertificateGen(
                 course,
                 args.template_file,
-                aws_id=settings.CERT_AWS_ID,
-                aws_key=settings.CERT_AWS_KEY,
+                aws_id=settings.get('CERT_AWS_ID'),
+                aws_key=settings.get('CERT_AWS_KEY'),
                 dir_prefix=pdf_dir,
                 long_org=args.long_org,
                 long_course=args.long_course,

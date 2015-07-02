@@ -39,12 +39,12 @@ def parse_args(args=sys.argv[1:]):
 
     parser.add_argument(
         '--aws-id',
-        default=settings.CERT_AWS_ID,
+        default=settings.get('CERT_AWS_ID'),
         help='AWS ID for write access to the S3 bucket',
     )
     parser.add_argument(
         '--aws-key',
-        default=settings.CERT_AWS_KEY,
+        default=settings.get('CERT_AWS_KEY'),
         help='AWS KEY for write access to the S3 bucket',
     )
     return parser.parse_args()
@@ -52,10 +52,14 @@ def parse_args(args=sys.argv[1:]):
 
 def main():
 
-    manager = XQueuePullManager(settings.QUEUE_URL, settings.QUEUE_NAME,
-                                settings.QUEUE_AUTH_USER,
-                                settings.QUEUE_AUTH_PASS,
-                                settings.QUEUE_USER, settings.QUEUE_PASS)
+    manager = XQueuePullManager(
+        settings.QUEUE_URL,
+        settings.QUEUE_NAME,
+        settings.get('QUEUE_AUTH_USER'),
+        settings.get('QUEUE_AUTH_PASS'),
+        settings.get('QUEUE_USER'),
+        settings.get('QUEUE_PASS'),
+    )
     last_course = None  # The last course_id we generated for
     cert = None  # A CertificateGen instance for a particular course
 

@@ -11,6 +11,7 @@ import yaml
 from logsettings import get_logger_config
 from path import path
 
+import openedx_certificates
 
 ROOT_PATH = path(__file__).dirname()
 REPO_PATH = ROOT_PATH
@@ -50,7 +51,6 @@ CERT_KEY_ID = 'FEF8D954'
 # CERT_KEY_ID = ''
 
 # Update this with your bucket name
-CERT_BUCKET = 'verify-test.edx.org'
 CERT_WEB_ROOT = '/var/tmp'
 # when set to true this will copy the generated certificate
 # to the CERT_WEB_ROOT. This is not something you want to do
@@ -86,7 +86,6 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     QUEUE_URL = ENV_TOKENS.get('QUEUE_URL', 'https://stage-xqueue.edx.org')
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
     CERT_KEY_ID = ENV_TOKENS.get('CERT_KEY_ID', CERT_KEY_ID)
-    CERT_BUCKET = ENV_TOKENS.get('CERT_BUCKET', CERT_BUCKET)
     CERT_URL = ENV_TOKENS.get('CERT_URL', '')
     CERT_DOWNLOAD_URL = ENV_TOKENS.get('CERT_DOWNLOAD_URL', "")
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")
@@ -108,6 +107,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
                                 service_variant=os.environ.get('SERVICE_VARIANT', None))
     CERT_PRIVATE_DIR = ENV_TOKENS.get('CERT_PRIVATE_DIR', CERT_PRIVATE_DIR)
 
+CERT_BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
 # This is the base URL used for logging CERT uploads to s3
 CERT_URL = CERT_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 # This is the base URL that will be displayed to the user in the dashboard

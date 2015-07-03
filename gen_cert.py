@@ -44,7 +44,7 @@ reportlab.rl_config.warnOnMissingFontGlyphs = 0
 
 RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
 TEMPLATE_DIR = settings.TEMPLATE_DIR
-BUCKET = settings.CERT_BUCKET
+BUCKET = settings.get('CERT_BUCKET')
 CERT_KEY_ID = settings.CERT_KEY_ID
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)

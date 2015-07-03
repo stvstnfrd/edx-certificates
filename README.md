@@ -124,7 +124,7 @@ To run the test suite:
         CERT_KEY_ID = # The id for the key which will be used by gpg to sign certificates
         CERT_AWS_ID = # Amazon Web Services ID # TODO: explain to override in JSON
         CERT_AWS_KEY = # Amazon Web Services Key # TODO: explain to override in JSON
-        CERT_BUCKET = # Amazon Web Services S3 bucket name
+        CERT_BUCKET = # Amazon Web Services S3 bucket name # TODO: explain to override in JSON
 
    It is also acceptable to leave the AWS KEY and ID values as none and instead
    use .boto file or run this code from a server that has an

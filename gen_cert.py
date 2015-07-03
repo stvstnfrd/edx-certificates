@@ -38,22 +38,23 @@ from bidi.algorithm import get_display
 import arabic_reshaper
 
 from opaque_keys.edx.keys import CourseKey
+import openedx_certificates.settings
 
 reportlab.rl_config.warnOnMissingFontGlyphs = 0
 
 
 RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
 TEMPLATE_DIR = settings.TEMPLATE_DIR
-BUCKET = settings.get('CERT_BUCKET')
+BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
 CERT_KEY_ID = settings.CERT_KEY_ID
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)
 S3_CERT_PATH = 'downloads'
 S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')
-TARGET_FILENAME = settings.get('CERT_FILENAME')
-TMP_GEN_DIR = settings.get('TMP_GEN_DIR')
-CERTS_ARE_CALLED = getattr(settings, 'CERTS_ARE_CALLED', 'certificate')
-CERTS_ARE_CALLED_PLURAL = getattr(settings, 'CERTS_ARE_CALLED_PLURAL', 'certificates')
+TARGET_FILENAME = openedx_certificates.settings.get('CERT_FILENAME')
+TMP_GEN_DIR = openedx_certificates.settings.get('TMP_GEN_DIR')
+CERTS_ARE_CALLED = openedx_certificates.settings.get('CERTS_ARE_CALLED')
+CERTS_ARE_CALLED_PLURAL = openedx_certificates.settings.get('CERTS_ARE_CALLED_PLURAL')
 
 # reduce logging level for gnupg
 l = logging.getLogger('gnupg')

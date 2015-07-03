@@ -60,11 +60,6 @@ COPY_TO_WEB_ROOT = False
 S3_UPLOAD = True
 S3_VERIFY_PATH = 'cert'
 
-# A knob to control what certs are called, some places have restrictions on the
-# word 'certificate'
-CERTS_ARE_CALLED = 'certificate'
-CERTS_ARE_CALLED_PLURAL = 'certificates'
-
 # Programmatic disclaimer text
 CERTS_SITE_DISCLAIMER_TEXT = (
     '<b>PLEASE NOTE:</b> SOME ONLINE COURSES MAY DRAW ON MATERIAL FROM COURSES TAUGHT ON-CAMPUS BUT THEY ARE NOT '
@@ -77,6 +72,8 @@ CERTS_SITE_DISCLAIMER_TEXT = (
 CERT_URL = ''
 CERT_DOWNLOAD_URL = ''
 CERT_VERIFY_URL = ''
+
+LOG_DIR = openedx_certificates.settings.get('LOG_DIR')
 
 # load settings from env.json and auth.json
 if os.path.isfile(ENV_ROOT / "env.json"):
@@ -91,10 +88,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     COPY_TO_WEB_ROOT = ENV_TOKENS.get('COPY_TO_WEB_ROOT', COPY_TO_WEB_ROOT)
     S3_UPLOAD = ENV_TOKENS.get('S3_UPLOAD', S3_UPLOAD)
     S3_VERIFY_PATH = ENV_TOKENS.get('S3_VERIFY_PATH', S3_VERIFY_PATH)
-    CERTS_ARE_CALLED = ENV_TOKENS.get('CERTS_ARE_CALLED', CERTS_ARE_CALLED)
-    CERTS_ARE_CALLED_PLURAL = ENV_TOKENS.get('CERTS_ARE_CALLED_PLURAL', CERTS_ARE_CALLED_PLURAL)
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
-    LOG_DIR = ENV_TOKENS.get('LOG_DIR', '/var/tmp')
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
     LOGGING_DEV_ENV = ENV_TOKENS.get('LOGGING_DEV_ENV', True)
     LOGGING = get_logger_config(LOG_DIR,

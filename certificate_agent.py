@@ -6,6 +6,7 @@ import os
 import time
 import settings
 from openedx_certificates.queue_xqueue import XQueuePullManager
+import openedx_certificates.settings
 from gen_cert import CertificateGen
 
 logging.config.dictConfig(settings.LOGGING)
@@ -39,12 +40,12 @@ def parse_args(args=sys.argv[1:]):
 
     parser.add_argument(
         '--aws-id',
-        default=settings.get('CERT_AWS_ID'),
+        default=openedx_certificates.settings.get('CERT_AWS_ID'),
         help='AWS ID for write access to the S3 bucket',
     )
     parser.add_argument(
         '--aws-key',
-        default=settings.get('CERT_AWS_KEY'),
+        default=openedx_certificates.settings.get('CERT_AWS_KEY'),
         help='AWS KEY for write access to the S3 bucket',
     )
     return parser.parse_args()
@@ -53,12 +54,12 @@ def parse_args(args=sys.argv[1:]):
 def main():
 
     manager = XQueuePullManager(
-        settings.get('QUEUE_URL'),
-        settings.get('QUEUE_NAME'),
-        settings.get('QUEUE_AUTH_USER'),
-        settings.get('QUEUE_AUTH_PASS'),
-        settings.get('QUEUE_USER'),
-        settings.get('QUEUE_PASS'),
+        openedx_certificates.settings.get('QUEUE_URL'),
+        openedx_certificates.settings.get('QUEUE_NAME'),
+        openedx_certificates.settings.get('QUEUE_AUTH_USER'),
+        openedx_certificates.settings.get('QUEUE_AUTH_PASS'),
+        openedx_certificates.settings.get('QUEUE_USER'),
+        openedx_certificates.settings.get('QUEUE_PASS'),
     )
     last_course = None  # The last course_id we generated for
     cert = None  # A CertificateGen instance for a particular course

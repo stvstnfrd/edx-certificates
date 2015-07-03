@@ -50,7 +50,6 @@ CERTS_SITE_DISCLAIMER_TEXT = (
 )
 
 # These are initialized below, after the environment is read
-CERT_URL = ''
 CERT_DOWNLOAD_URL = ''
 CERT_VERIFY_URL = ''
 
@@ -59,7 +58,6 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
         ENV_TOKENS = json.load(env_file)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
-    CERT_URL = ENV_TOKENS.get('CERT_URL', '')
     CERT_DOWNLOAD_URL = ENV_TOKENS.get('CERT_DOWNLOAD_URL', "")
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
@@ -73,11 +71,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     CERT_PRIVATE_DIR = ENV_TOKENS.get('CERT_PRIVATE_DIR', CERT_PRIVATE_DIR)
 
 CERT_BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
-# This is the base URL used for logging CERT uploads to s3
-CERT_URL = CERT_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 # This is the base URL that will be displayed to the user in the dashboard
-# It's different than CERT_URL because because CERT_URL will not have a valid
-# SSL certificate. # FIXME: confirm whether this is true
 CERT_DOWNLOAD_URL = CERT_DOWNLOAD_URL or 'https://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 

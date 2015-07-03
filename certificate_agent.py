@@ -109,7 +109,7 @@ def main():
                 last_course = course_id
         except (TypeError, ValueError, KeyError, IOError) as e:
             log.critical('Unable to parse queue submission ({0}) : {1}'.format(e, certdata))
-            if settings.DEBUG:
+            if openedx_certificates.settings.get('DEBUG'):
                 raise
             else:
                 continue
@@ -170,7 +170,7 @@ def main():
                 }),
             }
             manager.respond(xqueue_reply)
-            if settings.DEBUG:
+            if openedx_certificates.settings.get('DEBUG'):
                 raise
             else:
                 continue

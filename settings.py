@@ -25,11 +25,6 @@ CERT_PRIVATE_DIR = REPO_PATH
 if 'CERT_PRIVATE_DIR' in os.environ:
     CERT_PRIVATE_DIR = path(os.environ['CERT_PRIVATE_DIR'])
 
-# This directory and file must exist in CERT_PRIVATE_DIR
-# if you are using custom templates and custom cert config
-TEMPLATE_DATA_SUBDIR = 'template_data'
-CERT_DATA_FILE = 'cert-data.yml'
-
 # DEFAULTS
 DEBUG = False
 # This needs to be set on MacOS or anywhere you want logging to simply go
@@ -59,8 +54,6 @@ CERT_URL = ''
 CERT_DOWNLOAD_URL = ''
 CERT_VERIFY_URL = ''
 
-LOG_DIR = openedx_certificates.settings.get('LOG_DIR')
-
 # load settings from env.json and auth.json
 if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
@@ -71,7 +64,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
-    LOGGING = get_logger_config(LOG_DIR,
+    LOGGING = get_logger_config(openedx_certificates.settings.get('LOG_DIR'),
                                 logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
                                 local_loglevel=local_loglevel,
                                 debug=False,
@@ -91,8 +84,12 @@ CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BU
 # Use the custom CERT_PRIVATE_DIR for paths to the
 # template sub directory and the cert data config
 
-TEMPLATE_DIR = os.path.join(CERT_PRIVATE_DIR, TEMPLATE_DATA_SUBDIR)
+TEMPLATE_DIR = os.path.join(
+    CERT_PRIVATE_DIR,
+    openedx_certificates.settings.get('TEMPLATE_DATA_SUBDIR'),
+)
 
+CERT_DATA_FILE = openedx_certificates.settings.get('CERT_DATA_FILE')
 with open(os.path.join(CERT_PRIVATE_DIR, CERT_DATA_FILE)) as f:
     CERT_DATA = yaml.load(f.read().decode("utf-8"))
 

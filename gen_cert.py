@@ -46,7 +46,7 @@ reportlab.rl_config.warnOnMissingFontGlyphs = 0
 RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
 TEMPLATE_DIR = settings.TEMPLATE_DIR
 BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
-CERT_KEY_ID = settings.CERT_KEY_ID
+CERT_KEY_ID = openedx_certificates.settings.CERT_KEY_ID
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)
 S3_CERT_PATH = 'downloads'
@@ -262,10 +262,10 @@ class CertificateGen(object):
     def create_and_upload(
         self,
         name,
-        upload=settings.S3_UPLOAD,
+        upload=openedx_certificates.settings.S3_UPLOAD,
         cleanup=True,
-        copy_to_webroot=settings.COPY_TO_WEB_ROOT,
-        cert_web_root=settings.CERT_WEB_ROOT,
+        copy_to_webroot=openedx_certificates.settings.get('COPY_TO_WEB_ROOT'),
+        cert_web_root=openedx_certificates.settings.CERT_WEB_ROOT,
         grade=None,
         designation=None,
     ):
@@ -306,8 +306,8 @@ class CertificateGen(object):
         my_verify_path = os.path.join(verify_path, verify_uuid)
         if upload:
             s3_conn = boto.connect_s3(
-                settings.get('CERT_AWS_ID'),
-                settings.get('CERT_AWS_KEY')
+                openedx_certificates.settings.get('CERT_AWS_ID'),
+                openedx_certificates.settings.get('CERT_AWS_KEY')
             )
             bucket = s3_conn.get_bucket(BUCKET)
         if upload or copy_to_webroot:

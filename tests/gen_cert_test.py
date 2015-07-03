@@ -12,9 +12,10 @@ import settings
 from gen_cert import CertificateGen
 from gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
 from test_data import NAMES
+import openedx_certificates.settings
 
 
-CERT_FILENAME = settings.get('CERT_FILENAME')
+CERT_FILENAME = openedx_certificates.settings.get('CERT_FILENAME')
 CERT_FILESIG = CERT_FILENAME + '.sig'
 VERIFY_FILES = set(['valid.html', 'verify.html'])
 DOWNLOAD_FILES = set([])
@@ -78,7 +79,7 @@ def test_cert_names():
 
 def test_cert_upload():
     """Check here->S3->http round trip."""
-    if not settings.get('CERT_AWS_ID ') or not settings.get('CERT_AWS_KEY'):
+    if not openedx_certificates.settings.get('CERT_AWS_ID ') or not openedx_certificates.settings.get('CERT_AWS_KEY'):
         raise SkipTest
     cert = CertificateGen(settings.CERT_DATA.keys()[0])
     (download_uuid, verify_uuid, download_url) = cert.create_and_upload('John Smith')

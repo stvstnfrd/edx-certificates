@@ -42,23 +42,9 @@ LOGGING = get_logger_config(ENV_ROOT,
                             debug=False)
 
 # Default for the gpg dir
-# Specify the CERT_KEY_ID before running the test suite
 CERT_GPG_DIR = '{0}/.gnupg'.format(os.environ['HOME'])
 # dummy key:
 # https://raw.githubusercontent.com/edx/configuration/master/playbooks/roles/certs/files/example-private-key.txt
-CERT_KEY_ID = 'FEF8D954'
-# or leave blank to skip gpg signing
-# CERT_KEY_ID = ''
-
-# Update this with your bucket name
-CERT_WEB_ROOT = '/var/tmp'
-# when set to true this will copy the generated certificate
-# to the CERT_WEB_ROOT. This is not something you want to do
-# unless you are running your certificate service on a single
-# server
-COPY_TO_WEB_ROOT = False
-S3_UPLOAD = True
-S3_VERIFY_PATH = 'cert'
 
 # Programmatic disclaimer text
 CERTS_SITE_DISCLAIMER_TEXT = (
@@ -80,14 +66,9 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
         ENV_TOKENS = json.load(env_file)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
-    CERT_KEY_ID = ENV_TOKENS.get('CERT_KEY_ID', CERT_KEY_ID)
     CERT_URL = ENV_TOKENS.get('CERT_URL', '')
     CERT_DOWNLOAD_URL = ENV_TOKENS.get('CERT_DOWNLOAD_URL', "")
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")
-    CERT_WEB_ROOT = ENV_TOKENS.get('CERT_WEB_ROOT', CERT_WEB_ROOT)
-    COPY_TO_WEB_ROOT = ENV_TOKENS.get('COPY_TO_WEB_ROOT', COPY_TO_WEB_ROOT)
-    S3_UPLOAD = ENV_TOKENS.get('S3_UPLOAD', S3_UPLOAD)
-    S3_VERIFY_PATH = ENV_TOKENS.get('S3_VERIFY_PATH', S3_VERIFY_PATH)
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
     LOGGING = get_logger_config(LOG_DIR,

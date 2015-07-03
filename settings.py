@@ -34,7 +34,7 @@ CERT_DATA_FILE = 'cert-data.yml'
 DEBUG = False
 # This needs to be set on MacOS or anywhere you want logging to simply go
 # to an output file.
-LOGGING_DEV_ENV = True
+LOGGING_DEV_ENV = openedx_certificates.settings.get('LOGGING_DEV_ENV')
 LOGGING = get_logger_config(ENV_ROOT,
                             logging_env="dev",
                             local_loglevel="INFO",
@@ -90,7 +90,6 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     S3_VERIFY_PATH = ENV_TOKENS.get('S3_VERIFY_PATH', S3_VERIFY_PATH)
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
-    LOGGING_DEV_ENV = ENV_TOKENS.get('LOGGING_DEV_ENV', True)
     LOGGING = get_logger_config(LOG_DIR,
                                 logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
                                 local_loglevel=local_loglevel,

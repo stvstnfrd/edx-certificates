@@ -27,6 +27,7 @@ def get_logger_config(log_dir,
     is set to true since otherwise logging is handled by rsyslogd.
     """
 
+    # TODO: is logging_env even needed?
     hostname = platform.node().split(".")[0]
     syslog_format = ("[service_variant=certs]"
                      "[%(name)s][env:{logging_env}] %(levelname)s "

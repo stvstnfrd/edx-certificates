@@ -98,7 +98,7 @@ def get_cert_date(
     elif configured_date_parameter == "ROLLING":
         date_value = format_date(datetime.date.today(), format='long', locale=locale)
     else:
-        date_value = format_date(configured_date_parameter, format='long', locale=locale)
+        date_value = configured_date_parameter
 
     date_string = u"{0}".format(date_value)
 

@@ -1,6 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 Load settings from JSON
+
+application-wide
+-> env.json
+
+instance-wide
+-> auth.json
+
+course-wide
+-> cert-data.yml
+
+user-wide
+-> ??? from LMS ???
+
+request-wide
+-> XQueue
 """
 
 import json
@@ -114,7 +129,8 @@ DEFAULT_TRANSLATIONS = {
     },
 }
 
+# Default for the gpg dir
+# dummy key:
+# https://raw.githubusercontent.com/edx/configuration/master/playbooks/roles/certs/files/example-private-key.txt
 
-# This AMI might work for people that _just_ want to quickly deploy and
-# test out a _vanilla_ server, but I would recommend _against_ doing _any_
-# development of customization with this AMI.
+# TODO: add all `CERT_*` envvars to dict

@@ -39,20 +39,11 @@ CERT_GPG_DIR = '{0}/.gnupg'.format(os.environ['HOME'])
 # dummy key:
 # https://raw.githubusercontent.com/edx/configuration/master/playbooks/roles/certs/files/example-private-key.txt
 
-# Programmatic disclaimer text
-CERTS_SITE_DISCLAIMER_TEXT = (
-    '<b>PLEASE NOTE:</b> SOME ONLINE COURSES MAY DRAW ON MATERIAL FROM COURSES TAUGHT ON-CAMPUS BUT THEY ARE NOT '
-    'EQUIVALENT TO ON-CAMPUS COURSES. THIS STATEMENT DOES NOT AFFIRM THAT THIS PARTICIPANT WAS ENROLLED AS A STUDENT '
-    'AT STANFORD UNIVERSITY IN ANY WAY. IT DOES NOT CONFER A STANFORD UNIVERSITY GRADE, COURSE CREDIT OR DEGREE, AND '
-    'IT DOES NOT VERIFY THE IDENTITY OF THE PARTICIPANT.'
-)
-
 # load settings from env.json and auth.json
 if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
         ENV_TOKENS = json.load(env_file)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
-    CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
     LOGGING = get_logger_config(openedx_certificates.settings.get('LOG_DIR'),
                                 logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
@@ -85,7 +76,7 @@ DEFAULT_TRANSLATIONS = {
     'en_US': {
         'success_text': u'has successfully completed a free online offering of',
         'grade_interstitial': u"with {grade}.",
-        'disclaimer_text': CERTS_SITE_DISCLAIMER_TEXT,
+        'disclaimer_text': openedx_certificates.settings.get('CERTS_SITE_DISCLAIMER_TEXT'),
         'verify_text': u"Authenticity can be verified at {verify_link}",
     },
 }

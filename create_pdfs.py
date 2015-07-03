@@ -15,11 +15,11 @@ import sys
 from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME
 import settings
 from tests.test_data import NAMES
+import openedx_certificates.settings
 
 
 logging.config.dictConfig(settings.LOGGING)
 LOG = logging.getLogger('certificates.create_pdfs')
-TMP_GEN_DIR = settings.get('TMP_GEN_DIR')
 
 description = """
   Sample certificate generator
@@ -78,8 +78,8 @@ def main():
     viewer.
     Will copy out the pdfs into the certs/ dir
     """
-    pdf_dir = TMP_GEN_DIR
-    copy_dir = TMP_GEN_DIR + "+copy"
+    pdf_dir = openedx_certificates.settings.get('TMP_GEN_DIR')
+    copy_dir = pdf_dir + "+copy"
 
     # Remove files if they exist
     for d in [pdf_dir, copy_dir]:
@@ -111,8 +111,8 @@ def main():
             cert = CertificateGen(
                 course,
                 args.template_file,
-                aws_id=settings.get('CERT_AWS_ID'),
-                aws_key=settings.get('CERT_AWS_KEY'),
+                aws_id=openedx_certificates.settings.get('CERT_AWS_ID'),
+                aws_key=openedx_certificates.settings.get('CERT_AWS_KEY'),
                 dir_prefix=pdf_dir,
                 long_org=args.long_org,
                 long_course=args.long_course,

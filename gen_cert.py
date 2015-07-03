@@ -52,7 +52,6 @@ log = logging.getLogger('certificates.' + __name__)
 S3_CERT_PATH = 'downloads'
 S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')
 TARGET_FILENAME = openedx_certificates.settings.get('CERT_FILENAME')
-TMP_GEN_DIR = openedx_certificates.settings.get('TMP_GEN_DIR')
 CERTS_ARE_CALLED = openedx_certificates.settings.get('CERTS_ARE_CALLED')
 CERTS_ARE_CALLED_PLURAL = openedx_certificates.settings.get('CERTS_ARE_CALLED_PLURAL')
 
@@ -195,7 +194,7 @@ class CertificateGen(object):
                            template_pdf parameter
         """
         if dir_prefix is None:
-            dir_prefix = tempfile.mkdtemp(prefix=TMP_GEN_DIR)
+            dir_prefix = tempfile.mkdtemp(prefix=openedx_certificates.settings.get('TMP_GEN_DIR'))
         self._ensure_dir(dir_prefix)
         self.dir_prefix = dir_prefix
 

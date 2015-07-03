@@ -50,7 +50,6 @@ CERTS_SITE_DISCLAIMER_TEXT = (
 )
 
 # These are initialized below, after the environment is read
-CERT_DOWNLOAD_URL = ''
 CERT_VERIFY_URL = ''
 
 # load settings from env.json and auth.json
@@ -58,7 +57,6 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
         ENV_TOKENS = json.load(env_file)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
-    CERT_DOWNLOAD_URL = ENV_TOKENS.get('CERT_DOWNLOAD_URL', "")
     CERT_VERIFY_URL = ENV_TOKENS.get('CERT_VERIFY_URL', "")
     CERTS_SITE_DISCLAIMER_TEXT = ENV_TOKENS.get('CERT_SITE_DISCLAIMER_TEXT', CERTS_SITE_DISCLAIMER_TEXT)
     local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
@@ -72,7 +70,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
 
 CERT_BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
 # This is the base URL that will be displayed to the user in the dashboard
-CERT_DOWNLOAD_URL = CERT_DOWNLOAD_URL or 'https://{}.s3.amazonaws.com'.format(CERT_BUCKET)
+CERT_DOWNLOAD_URL = openedx_certificates.settings.get('CERT_DOWNLOAD_URL') or 'https://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 CERT_VERIFY_URL = CERT_VERIFY_URL or 'http://{}.s3.amazonaws.com'.format(CERT_BUCKET)
 
 # Use the custom CERT_PRIVATE_DIR for paths to the

@@ -15,7 +15,6 @@ import sys
 from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME
 from openedx_certificates import settings
 from tests.test_data import NAMES
-import openedx_certificates.settings
 
 
 logging.config.dictConfig(settings.LOGGING)

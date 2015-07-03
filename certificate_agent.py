@@ -53,7 +53,7 @@ def parse_args(args=sys.argv[1:]):
 def main():
 
     manager = XQueuePullManager(
-        settings.QUEUE_URL,
+        settings.get('QUEUE_URL'),
         settings.get('QUEUE_NAME'),
         settings.get('QUEUE_AUTH_USER'),
         settings.get('QUEUE_AUTH_PASS'),

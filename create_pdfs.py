@@ -13,7 +13,7 @@ import shutil
 import sys
 
 from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME
-import settings
+from openedx_certificates import settings
 from tests.test_data import NAMES
 import openedx_certificates.settings
 
@@ -78,7 +78,7 @@ def main():
     viewer.
     Will copy out the pdfs into the certs/ dir
     """
-    pdf_dir = openedx_certificates.settings.get('TMP_GEN_DIR')
+    pdf_dir = settings.get('TMP_GEN_DIR')
     copy_dir = pdf_dir + "+copy"
 
     # Remove files if they exist
@@ -94,7 +94,7 @@ def main():
     if args.course_id:
         course_list = [args.course_id]
     else:
-        course_list = settings.CERT_DATA.keys()
+        course_list = settings.get('CERT_DATA').keys()
 
     upload_files = not args.no_upload
 
@@ -111,8 +111,8 @@ def main():
             cert = CertificateGen(
                 course,
                 args.template_file,
-                aws_id=openedx_certificates.settings.get('CERT_AWS_ID'),
-                aws_key=openedx_certificates.settings.get('CERT_AWS_KEY'),
+                aws_id=settings.get('CERT_AWS_ID'),
+                aws_key=settings.get('CERT_AWS_KEY'),
                 dir_prefix=pdf_dir,
                 long_org=args.long_org,
                 long_course=args.long_course,

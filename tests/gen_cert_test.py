@@ -8,14 +8,14 @@ import urllib2
 from nose.plugins.skip import SkipTest
 from nose.tools import assert_true
 
-import settings
+from openedx_certificates import settings
 from gen_cert import CertificateGen
 from gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
 from test_data import NAMES
 import openedx_certificates.settings
 
 
-CERT_FILENAME = openedx_certificates.settings.get('CERT_FILENAME')
+CERT_FILENAME = settings.get('CERT_FILENAME')
 CERT_FILESIG = CERT_FILENAME + '.sig'
 VERIFY_FILES = set(['valid.html', 'verify.html'])
 DOWNLOAD_FILES = set([])
@@ -37,7 +37,8 @@ def test_cert_gen():
      * Publishes the certificate to a temporary directory
     """
 
-    for course_id in settings.CERT_DATA.keys():
+    for course_id in settings.get('CERT_DATA').keys():
+        print('course_id', course_id)
         tmpdir = tempfile.mkdtemp()
         cert = CertificateGen(course_id)
         (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
@@ -45,7 +46,7 @@ def test_cert_gen():
             cert_web_root=tmpdir, cleanup=True)
 
         # If the settings we're testing have VERIFY turned off, skip those tests, too
-        if settings.CERT_DATA[course_id].get('VERIFY', True) and verify_uuid:
+        if settings.get('CERT_DATA')[course_id].get('VERIFY', True) and verify_uuid:
             verify_files = os.listdir(os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid))
             download_files = os.listdir(os.path.join(tmpdir, S3_CERT_PATH, download_uuid))
 
@@ -55,7 +56,7 @@ def test_cert_gen():
             # The detached signature is valid
             pdf = os.path.join(tmpdir, S3_CERT_PATH, download_uuid, CERT_FILENAME)
             sig = os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid, CERT_FILESIG)
-            gpg = gnupg.GPG(homedir=settings.CERT_GPG_DIR)
+            gpg = gnupg.GPG(homedir=settings.get('CERT_GPG_DIR'))
             with open(pdf) as f:
                 v = gpg.verify_file(f, sig)
             assert_true(v is not None and v.trust_level >= v.TRUST_FULLY)
@@ -71,7 +72,7 @@ def test_cert_gen():
 def test_cert_names():
     """Generate certificates for all names in NAMES without saving or uploading"""
     # XXX: This is meant to catch unicode rendering problems, but does it?
-    course_id = settings.CERT_DATA.keys()[0]
+    course_id = settings.get('CERT_DATA').keys()[0]
     for name in NAMES:
         cert = CertificateGen(course_id)
         (download_uuid, verify_uuid, download_url) = cert.create_and_upload(name, upload=False)
@@ -79,9 +80,9 @@ def test_cert_names():
 
 def test_cert_upload():
     """Check here->S3->http round trip."""
-    if not openedx_certificates.settings.get('CERT_AWS_ID ') or not openedx_certificates.settings.get('CERT_AWS_KEY'):
+    if not settings.get('CERT_AWS_ID ') or not settings.get('CERT_AWS_KEY'):
         raise SkipTest
-    cert = CertificateGen(settings.CERT_DATA.keys()[0])
+    cert = CertificateGen(settings.get('CERT_DATA').keys()[0])
     (download_uuid, verify_uuid, download_url) = cert.create_and_upload('John Smith')
     r = urllib2.urlopen(download_url)
     with tempfile.NamedTemporaryFile(delete=True) as f:

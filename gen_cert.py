@@ -81,7 +81,7 @@ BLANK_PDFS = {
 }
 
 
-def get_cert_date(calling_date_parameter, configured_date_parameter, locale=settings.DEFAULT_LOCALE):
+def get_cert_date(calling_date_parameter, configured_date_parameter, locale=openedx_certificates.settings.get('DEFAULT_LOCALE')):
     """Get pertinent date for display on cert
 
     - If cert passes a set date in 'calling_date_parameter', format that
@@ -219,7 +219,7 @@ class CertificateGen(object):
                 for key, value in cert_data.get('interstitial', {}).items()
             }
             self.interstitial_texts.update(interstitial_dict)
-            self.locale = cert_data.get('locale', settings.DEFAULT_LOCALE).encode('utf-8')
+            self.locale = cert_data.get('locale', openedx_certificates.settings.get('DEFAULT_LOCALE')).encode('utf-8')
             self.course_translations = cert_data.get('translations', {})
         except KeyError:
             log.critical("Unable to lookup long names for course {0}".format(course_id))
@@ -1831,7 +1831,7 @@ class CertificateGen(object):
         yOffset = minYOffset + ((max_height - height) / 2)
         paragraph.drawOn(PAGE, GUTTER_WIDTH - (name_style.fontSize / 12), yOffset)
 
-        default_translation = settings.DEFAULT_TRANSLATIONS.get(settings.DEFAULT_LOCALE, {})
+        default_translation = settings.DEFAULT_TRANSLATIONS.get(openedx_certificates.settings.get('DEFAULT_LOCALE'), {})
         successfully_completed = default_translation.get('success_text', '')
         grade_interstitial = default_translation.get('grade_interstitial', '')
         disclaimer_text = default_translation.get('disclaimer_text', '')

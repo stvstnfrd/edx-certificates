@@ -44,13 +44,14 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
         ENV_TOKENS = json.load(env_file)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
-    local_loglevel = ENV_TOKENS.get('LOCAL_LOGLEVEL', 'INFO')
-    LOGGING = get_logger_config(openedx_certificates.settings.get('LOG_DIR'),
-                                logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
-                                local_loglevel=local_loglevel,
-                                debug=False,
-                                dev_env=LOGGING_DEV_ENV,
-                                service_variant=os.environ.get('SERVICE_VARIANT', None))
+    LOGGING = get_logger_config(
+        openedx_certificates.settings.get('LOG_DIR'),
+        logging_env=ENV_TOKENS.get('LOGGING_ENV', 'dev'),
+        local_loglevel=openedx_certificates.settings.get('LOCAL_LOGLEVEL'),
+        debug=False,
+        dev_env=LOGGING_DEV_ENV,
+        service_variant=os.environ.get('SERVICE_VARIANT', None),
+    )
     CERT_PRIVATE_DIR = ENV_TOKENS.get('CERT_PRIVATE_DIR', CERT_PRIVATE_DIR)
 
 CERT_BUCKET = openedx_certificates.settings.get('CERT_BUCKET')
@@ -71,7 +72,6 @@ with open(os.path.join(CERT_PRIVATE_DIR, CERT_DATA_FILE)) as f:
     CERT_DATA = yaml.load(f.read().decode("utf-8"))
 
 # Locale and Translations
-DEFAULT_LOCALE = 'en_US'
 DEFAULT_TRANSLATIONS = {
     'en_US': {
         'success_text': u'has successfully completed a free online offering of',

@@ -42,6 +42,9 @@ import openedx_certificates.settings
 
 reportlab.rl_config.warnOnMissingFontGlyphs = 0
 
+if not os.path.exists(settings.get('TMP_GEN_DIR')):
+    os.makedirs(settings.get('TMP_GEN_DIR'))
+
 
 RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
 TEMPLATE_DIR = settings.get('TEMPLATE_DIR')
@@ -198,7 +201,11 @@ class CertificateGen(object):
                            template_pdf parameter
         """
         if dir_prefix is None:
-            dir_prefix = tempfile.mkdtemp(prefix=openedx_certificates.settings.get('TMP_GEN_DIR'))
+            dir_prefix = tempfile.mkdtemp(
+                prefix='cert-',
+                dir=settings.get('TMP_GEN_DIR'),
+            )
+            # dir_prefix = tempfile.mkdtemp(prefix=settings.get('TMP_GEN_DIR'))
         self._ensure_dir(dir_prefix)
         self.dir_prefix = dir_prefix
 

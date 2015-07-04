@@ -1842,7 +1842,7 @@ class CertificateGen(object):
         yOffset = minYOffset + ((max_height - height) / 2)
         paragraph.drawOn(PAGE, GUTTER_WIDTH - (name_style.fontSize / 12), yOffset)
 
-        default_translation = settings.DEFAULT_TRANSLATIONS.get(settings.get('DEFAULT_LOCALE'), {})
+        default_translation = settings.get('DEFAULT_TRANSLATIONS').get(settings.get('DEFAULT_LOCALE'), {})
         successfully_completed = default_translation.get('success_text', '')
         grade_interstitial = default_translation.get('grade_interstitial', '')
         disclaimer_text = default_translation.get('disclaimer_text', '')

@@ -20,38 +20,73 @@ from tests.test_data import NAMES
 logging.config.dictConfig(settings.get('LOGGING'))
 LOG = logging.getLogger('certificates.create_pdfs')
 
-description = """
-  Sample certificate generator
-"""
-
-stanford_cme_titles = (('AuD', 'AuD'),
-                       ('DDS', 'DDS'),
-                       ('DO', 'DO'),
-                       ('MD', 'MD'),
-                       ('MD,PhD', 'MD,PhD'),
-                       ('MBBS', 'MBBS'),
-                       ('NP', 'NP'),
-                       ('PA', 'PA'),
-                       ('PharmD', 'PharmD'),
-                       ('PhD', 'PhD'),
-                       ('RN', 'RN'),
-                       ('Other', 'Other'),
-                       ('None', 'None'),
-                       (None, None))
+stanford_cme_titles = (
+    ('AuD', 'AuD'),
+    ('DDS', 'DDS'),
+    ('DO', 'DO'),
+    ('MD', 'MD'),
+    ('MD,PhD', 'MD,PhD'),
+    ('MBBS', 'MBBS'),
+    ('NP', 'NP'),
+    ('PA', 'PA'),
+    ('PharmD', 'PharmD'),
+    ('PhD', 'PhD'),
+    ('RN', 'RN'),
+    ('Other', 'Other'),
+    ('None', 'None'),
+    (None, None),
+)
 
 
 def parse_args(args=sys.argv[1:]):
-    parser = ArgumentParser(description=description,
-                            formatter_class=RawTextHelpFormatter)
-
-    parser.add_argument('-c', '--course-id', help='optional course-id')
-    parser.add_argument('-n', '--name', help='optional name for the cert')
-    parser.add_argument('-t', '--template-file', help='optional template file')
-    parser.add_argument('-o', '--long-org', help='optional long org', default='')
-    parser.add_argument('-l', '--long-course', help='optional long course', default='')
-    parser.add_argument('-i', '--issued-date', help='optional issue date')
-    parser.add_argument('-T', '--assign-title', help='add random title after name', default=False, action="store_true")
-    parser.add_argument('-f', '--input-file', help='optional input file for names, one name per line')
+    parser = ArgumentParser(
+        description=__doc__,
+        formatter_class=RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        '-c',
+        '--course-id',
+        help='optional course-id',
+    )
+    parser.add_argument(
+        '-n',
+        '--name',
+        help='optional name for the cert',
+    )
+    parser.add_argument(
+        '-t',
+        '--template-file',
+        help='optional template file',
+    )
+    parser.add_argument(
+        '-o',
+        '--long-org',
+        help='optional long org',
+        default='',
+    )
+    parser.add_argument(
+        '-l',
+        '--long-course',
+        help='optional long course',
+        default='',
+    )
+    parser.add_argument(
+        '-i',
+        '--issued-date',
+        help='optional issue date',
+    )
+    parser.add_argument(
+        '-T',
+        '--assign-title',
+        help='add random title after name',
+        default=False,
+        action='store_true',
+    )
+    parser.add_argument(
+        '-f',
+        '--input-file',
+        help='optional input file for names, one name per line',
+    )
     parser.add_argument(
         '-r',
         '--report-file',
@@ -62,50 +97,64 @@ def parse_args(args=sys.argv[1:]):
         '--no-report',
         help='Do not comment on generated output',
         default=False,
-        action="store_true",
+        action='store_true',
     )
-    parser.add_argument('-G', '--grade-text', help='optional grading label to apply')
-    parser.add_argument('-U', '--no-upload', help='skip s3 upload step', default=False, action="store_true")
-
+    parser.add_argument(
+        '-G',
+        '--grade-text',
+        help='optional grading label to apply',
+    )
+    parser.add_argument(
+        '-U',
+        '--no-upload',
+        help='skip s3 upload step',
+        default=False,
+        action='store_true',
+    )
     return parser.parse_args()
 
 
 def main():
     """
-    Generates some pfds using each template
+    Generates some pdfs using each template
     for different names for review in a pdf
     viewer.
     Will copy out the pdfs into the certs/ dir
     """
     pdf_dir = settings.get('TMP_GEN_DIR')
     copy_dir = pdf_dir + "+copy"
-
-    # Remove files if they exist
-    for d in [pdf_dir, copy_dir]:
-        if os.path.exists(d):
-            shutil.rmtree(d)
-
-    if not os.path.exists(copy_dir):
-        os.makedirs(copy_dir)
-
     certificate_data = []
+    upload_files = not args.no_upload
+    course_list = settings.get('CERT_DATA').keys()
+    grade = None
+    should_write_report_to_stdout = not args.no_report
 
+    if args.grade_text:
+        grade = args.grade_text
     if args.course_id:
         course_list = [args.course_id]
+    if args.name:
+        name_list = [args.name]
+    elif args.input_file:
+        try:
+            with open(args.input_file) as file_input:
+                name_list = [line.rstrip() for line in file_input.readlines()]
+        except OSError:
+            name_list = NAMES
     else:
-        course_list = settings.get('CERT_DATA').keys()
+        name_list = NAMES
 
-    upload_files = not args.no_upload
+    for directory_output in [pdf_dir, copy_dir]:
+        try:
+            shutil.rmtree(directory_output)
+        except OSError:
+            pass
+    try:
+        os.makedirs(copy_dir)
+    except OSError:
+        pass
 
     for course in course_list:
-        if args.name:
-            name_list = [args.name]
-        elif args.input_file:
-            with open(args.input_file) as f:
-                name_list = [line.rstrip() for line in f.readlines()]
-        else:
-            name_list = NAMES
-
         for name in name_list:
             cert = CertificateGen(
                 course,
@@ -120,23 +169,33 @@ def main():
             title = None
             if args.assign_title:
                 title = random.choice(stanford_cme_titles)[0]
-                print "assigning random title", name, title
-            grade = None
-            if args.grade_text:
-                grade = args.grade_text
-            (download_uuid, verify_uuid,
-                download_url) = cert.create_and_upload(name, upload=upload_files, copy_to_webroot=False,
-                                                       cleanup=False, designation=title, grade=grade)
-            certificate_data.append((name, course, args.long_org, args.long_course, download_url))
+            (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+                name,
+                upload=upload_files,
+                copy_to_webroot=False,
+                cleanup=False,
+                designation=title,
+                grade=grade,
+            )
+            certificate_data.append(
+                (
+                    name,
+                    course,
+                    args.long_org,
+                    args.long_course,
+                    download_url,
+                )
+            )
             gen_dir = os.path.join(
                 cert.dir_prefix,
                 settings.get('S3_CERT_PATH'),
                 download_uuid,
             )
-            copy_dest = '{copy_dir}/{course}-{name}.pdf'.format(
+            copy_dest = "{copy_dir}/{course}-{name}.pdf".format(
                 copy_dir=copy_dir,
-                name=name.replace(" ", "-").replace("/", "-"),
-                course=course.replace("/", "-"))
+                name=name.replace(' ', '-').replace('/', '-'),
+                course=course.replace('/', '-')
+            )
 
             try:
                 shutil.copyfile(
@@ -154,7 +213,6 @@ def main():
                 raise
             print "Created {0}".format(copy_dest)
 
-    should_write_report_to_stdout = not args.no_report
     if args.report_file:
         try:
             with open(args.report_file, 'wb') as file_report:

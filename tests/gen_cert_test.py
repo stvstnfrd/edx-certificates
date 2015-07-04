@@ -10,13 +10,11 @@ from nose.tools import assert_true
 
 from openedx_certificates import settings
 from gen_cert import CertificateGen
-from gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
 from test_data import NAMES
 import openedx_certificates.settings
 
 
-CERT_FILENAME = settings.get('CERT_FILENAME')
-CERT_FILESIG = CERT_FILENAME + '.sig'
+CERT_FILESIG = settings.get('CERT_FILENAME ') + '.sig'
 VERIFY_FILES = set(['valid.html', 'verify.html'])
 DOWNLOAD_FILES = set([])
 
@@ -24,7 +22,7 @@ DOWNLOAD_FILES = set([])
 def setUp():
     """A gratuitous setUp to document that these bits are added dynamically."""
     VERIFY_FILES.add(CERT_FILESIG)
-    DOWNLOAD_FILES.add(CERT_FILENAME)
+    DOWNLOAD_FILES.add(settings.get('CERT_FILENAME'))
 
 
 def test_cert_gen():
@@ -46,15 +44,31 @@ def test_cert_gen():
 
         # If the settings we're testing have VERIFY turned off, skip those tests, too
         if settings.get('CERT_DATA')[course_id].get('VERIFY', True) and verify_uuid:
-            verify_files = os.listdir(os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid))
-            download_files = os.listdir(os.path.join(tmpdir, S3_CERT_PATH, download_uuid))
+            verify_files = os.listdir(os.path.join(tmpdir, settings.get('S3_VERIFY_PATH'), verify_uuid))
+            download_files = os.listdir(
+                os.path.join(
+                    tmpdir,
+                    settings.get('S3_CERT_PATH'),
+                    download_uuid,
+                )
+            )
 
             # All the verification files were created correctly
             assert_true(set(verify_files) == VERIFY_FILES)
 
             # The detached signature is valid
-            pdf = os.path.join(tmpdir, S3_CERT_PATH, download_uuid, CERT_FILENAME)
-            sig = os.path.join(tmpdir, S3_VERIFY_PATH, verify_uuid, CERT_FILESIG)
+            pdf = os.path.join(
+                tmpdir,
+                settings.get('S3_CERT_PATH'),
+                download_uuid,
+                settings.get('CERT_FILENAME'),
+            )
+            sig = os.path.join(
+                tmpdir,
+                settings.get('S3_VERIFY_PATH'),
+                verify_uuid,
+                CERT_FILESIG,
+            )
             gpg = gnupg.GPG(homedir=settings.get('CERT_GPG_DIR'))
             with open(pdf) as f:
                 v = gpg.verify_file(f, sig)

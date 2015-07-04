@@ -12,7 +12,7 @@ import random
 import shutil
 import sys
 
-from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME
+from gen_cert import CertificateGen
 from openedx_certificates import settings
 from tests.test_data import NAMES
 
@@ -128,15 +128,24 @@ def main():
                 download_url) = cert.create_and_upload(name, upload=upload_files, copy_to_webroot=False,
                                                        cleanup=False, designation=title, grade=grade)
             certificate_data.append((name, course, args.long_org, args.long_course, download_url))
-            gen_dir = os.path.join(cert.dir_prefix, S3_CERT_PATH, download_uuid)
+            gen_dir = os.path.join(
+                cert.dir_prefix,
+                settings.get('S3_CERT_PATH'),
+                download_uuid,
+            )
             copy_dest = '{copy_dir}/{course}-{name}.pdf'.format(
                 copy_dir=copy_dir,
                 name=name.replace(" ", "-").replace("/", "-"),
                 course=course.replace("/", "-"))
 
             try:
-                shutil.copyfile('{0}/{1}'.format(gen_dir, TARGET_FILENAME),
-                                unicode(copy_dest.decode('utf-8')))
+                shutil.copyfile(
+                    "{0}/{1}".format(
+                        gen_dir,
+                        settings.get('CERT_FILENAME'),
+                    ),
+                    unicode(copy_dest.decode('utf-8'))
+                )
             except Exception, msg:
                 # Sometimes we have problems finding or creating the files to be copied;
                 # the following lines help us debug this case

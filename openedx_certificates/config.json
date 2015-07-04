@@ -38,6 +38,7 @@
     "LOGGING_DEV_ENV": true,
     "QUEUE_NAME": "test-pull",
     "QUEUE_URL": "https://stage-xqueue.edx.org",
+    "S3_CERT_PATH": "downloads",
     "S3_UPLOAD": true,
     "S3_VERIFY_PATH": "cert",
     "TEMPLATE_DATA_SUBDIR": "template_data",

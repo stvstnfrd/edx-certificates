@@ -7,7 +7,6 @@ import os
 import time
 from openedx_certificates import settings
 from openedx_certificates.queue_xqueue import XQueuePullManager
-import openedx_certificates.settings
 from gen_cert import CertificateGen
 
 logging.config.dictConfig(settings.get('LOGGING'))

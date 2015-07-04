@@ -38,7 +38,7 @@ stanford_cme_titles = (
 )
 
 
-def parse_args(args=sys.argv[1:]):
+def parse_args():
     parser = ArgumentParser(
         description=__doc__,
         formatter_class=RawTextHelpFormatter,
@@ -114,7 +114,7 @@ def parse_args(args=sys.argv[1:]):
     return parser.parse_args()
 
 
-def main():
+def main(args):
     """
     Generates some pdfs using each template
     for different names for review in a pdf
@@ -227,4 +227,4 @@ def main():
 
 if __name__ == '__main__':
     args = parse_args()
-    main()
+    main(args)

@@ -9,7 +9,7 @@ from openedx_certificates.queue_xqueue import XQueuePullManager
 import openedx_certificates.settings
 from gen_cert import CertificateGen
 
-logging.config.dictConfig(settings.LOGGING)
+logging.config.dictConfig(settings.get('LOGGING'))
 log = logging.getLogger('certificates: ' + __name__)
 
 

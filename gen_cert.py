@@ -50,7 +50,7 @@ RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
 TEMPLATE_DIR = settings.get('TEMPLATE_DIR')
 BUCKET = settings.get('CERT_BUCKET')
 CERT_KEY_ID = settings.get('CERT_KEY_ID')
-logging.config.dictConfig(settings.LOGGING)
+logging.config.dictConfig(settings.get('LOGGING'))
 log = logging.getLogger('certificates.' + __name__)
 S3_CERT_PATH = 'downloads'
 S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')

@@ -17,7 +17,7 @@ from openedx_certificates import settings
 from tests.test_data import NAMES
 
 
-logging.config.dictConfig(settings.LOGGING)
+logging.config.dictConfig(settings.get('LOGGING'))
 LOG = logging.getLogger('certificates.create_pdfs')
 
 description = """

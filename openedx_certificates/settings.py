@@ -91,10 +91,11 @@ if get('CERT_DATA_FILE'):
         _cert_data = {}
     update('CERT_DATA', _cert_data)
 
-LOGGING = get_logger_config(
+_logging = get_logger_config(
     get('LOG_DIR', _path_application),
     logging_env=get('LOGGING_ENV'),
     local_loglevel=get('LOCAL_LOGLEVEL'),
     debug=get('DEBUG'),
     dev_env=get('LOGGING_DEV_ENV'),
 )
+update('LOGGING', _logging)

@@ -4,8 +4,7 @@ Load settings from JSON
 """
 
 import json
-import os.environ
-import os.path
+import os
 
 import yaml
 
@@ -76,7 +75,7 @@ if get('CERT_PRIVATE_DIR') and get('TEMPLATE_DATA_SUBDIR'):
     )
     update(u'TEMPLATE_DIR', _template_dir)
 
-if get('CERT_DATA_FILE'):
+if get('CERT_DATA_FILE') and get('CERT_PRIVATE_DIR'):
     _cert_data_file = os.path.join(
         get('CERT_PRIVATE_DIR'),
         get('CERT_DATA_FILE'),

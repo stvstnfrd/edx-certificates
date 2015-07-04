@@ -8,10 +8,9 @@ import urllib2
 from nose.plugins.skip import SkipTest
 from nose.tools import assert_true
 
-from openedx_certificates import settings
 from gen_cert import CertificateGen
+from openedx_certificates import settings
 from test_data import NAMES
-import openedx_certificates.settings
 
 
 CERT_FILESIG = settings.get('CERT_FILENAME') + '.sig'
@@ -78,8 +77,10 @@ def test_cert_gen():
             assert_true(set(download_files) == DOWNLOAD_FILES)
 
         # Remove files
-        if os.path.exists(tmpdir):
+        try:
             shutil.rmtree(tmpdir)
+        except OSError:
+            pass
 
 
 def test_cert_names():

@@ -5,6 +5,7 @@ import json
 import sys
 import os
 import time
+
 from openedx_certificates import settings
 from openedx_certificates.queue_xqueue import XQueuePullManager
 from gen_cert import CertificateGen

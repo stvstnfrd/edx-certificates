@@ -75,7 +75,7 @@ _ENV['CERT_GPG_DIR'] = _ENV.get(
 )
 _ENV[u'TEMPLATE_DIR'] = os.path.join(
     _CERT_PRIVATE_DIR,
-    _ENV.get('TEMPLATE_DATA_SUBDIR') or '',
+    _ENV.get('TEMPLATE_DATA_SUBDIR', ''),
 )
 
 LOGGING = get_logger_config(

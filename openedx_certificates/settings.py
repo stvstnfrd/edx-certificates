@@ -21,6 +21,7 @@ def _load_json(filepath, filename):
         result = {}
     return result
 
+
 def _load_environ(prefix='CERT_'):
     environ = {}
     for key in os.environ:
@@ -54,6 +55,7 @@ def get(key, default=None, course_id=None):
             if key in _get('CERT_DATA')[course_id]:
                 return _get('CERT_DATA')[course_id][key]
     return _get(key, default)
+
 
 def update(key, value):
     _custom[key] = value

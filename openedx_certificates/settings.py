@@ -4,10 +4,10 @@ Load settings from JSON
 """
 
 import json
-import os
+import os.environ
 import os.path
-import yaml
 
+import yaml
 
 from logsettings import get_logger_config
 

@@ -23,6 +23,7 @@ request-wide
 import json
 import os
 import os.path
+from pprint import pprint
 import yaml
 
 from path import path
@@ -91,7 +92,6 @@ LOGGING = get_logger_config(
 # CERT_AWS_KEY = AUTH_TOKENS.get('CERT_AWS_KEY')
 # CERT_AWS_ID = AUTH_TOKENS.get('CERT_AWS_ID')
 
-from pprint import pprint
 pprint(_AUTH)
 pprint(_ENV)
 pprint(_default)
@@ -122,6 +122,7 @@ DEFAULT_TRANSLATIONS = {
 # Default for the gpg dir
 # dummy key:
 # https://raw.githubusercontent.com/edx/configuration/master/playbooks/roles/certs/files/example-private-key.txt
+
 
 def get(key, default=None):
     # TODO: it may be more performant to merge the dicts together once

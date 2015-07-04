@@ -14,7 +14,7 @@ from test_data import NAMES
 import openedx_certificates.settings
 
 
-CERT_FILESIG = settings.get('CERT_FILENAME ') + '.sig'
+CERT_FILESIG = settings.get('CERT_FILENAME') + '.sig'
 VERIFY_FILES = set(['valid.html', 'verify.html'])
 DOWNLOAD_FILES = set([])
 

@@ -38,7 +38,6 @@ def test_cert_gen():
     """
 
     for course_id in settings.get('CERT_DATA').keys():
-        print('course_id', course_id)
         tmpdir = tempfile.mkdtemp()
         cert = CertificateGen(course_id)
         (download_uuid, verify_uuid, download_url) = cert.create_and_upload(

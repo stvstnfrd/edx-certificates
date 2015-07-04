@@ -49,10 +49,6 @@ _all.update(_environ)
 def get(key, default=None, course_id=None):
     def _get(key, default=None):
         return _all.get(key, default)
-        # for config in [_environ, _custom, _auth, _env, _default]:
-        #     if key in config:
-        #         return config[key]
-        # return default
     if course_id:
         if course_id in _get('CERT_DATA'):
             if key in _get('CERT_DATA')[course_id]:

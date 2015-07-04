@@ -1,8 +1,12 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 This is a standalone utility for generating certficiates.
 It will use test data in tests/test_data.py for names and courses.
 PDFs by default will be dropped in TMP_GEN_DIR for review
+
+TODO: read from CSV
+`course_id,name,grade`
 """
 from argparse import ArgumentParser, RawTextHelpFormatter
 import csv
@@ -46,7 +50,7 @@ def parse_args():
     parser.add_argument(
         '-c',
         '--course-id',
-        help='optional course-id',
+        help='optional course_id',
     )
     parser.add_argument(
         '-n',
@@ -205,13 +209,21 @@ def main(args):
                     ),
                     unicode(copy_dest.decode('utf-8'))
                 )
-            except Exception, msg:
-                # Sometimes we have problems finding or creating the files to be copied;
-                # the following lines help us debug this case
-                print msg
-                print "%s\n%s\n%s\n%s\n%s\n%s" % (name, download_uuid, verify_uuid, download_uuid, gen_dir, copy_dest)
+            except Exception as error:
+                LOG.error(
+                    "{error}: {name}: {download_uuid}: {verify_uuid}: {download_uuid}: {gen_dir}: {copy_dest}",
+                    {
+                        'error': error,
+                        'name': name,
+                        'download_uuid': download_uuid,
+                        'verify_uuid': verify_uuid,
+                        'download_uuid': download_uuid,
+                        'gen_dir': gen_dir,
+                        'copy_dest': copy_dest,
+                    },
+                )
                 raise
-            print "Created {0}".format(copy_dest)
+            LOG.info("Created %s", copy_dest)
 
     if args.report_file:
         try:
@@ -224,6 +236,7 @@ def main(args):
     if should_write_report_to_stdout:
         for row in certificate_data:
             print '\t'.join(row)
+            LOG.DEBUG(': '.join(row))
 
 if __name__ == '__main__':
     args = parse_args()

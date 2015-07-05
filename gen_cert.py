@@ -274,10 +274,18 @@ class CertificateGen(object):
             template_pdf_filename = "{0}/{1}".format(template_prefix, template_pdf)
             if 'verified' in template_pdf:
                 self.template_type = 'verified'
+        print('w00t')
+        return
         try:
             self.template_pdf = PdfFileReader(file(template_pdf_filename, "rb"))
         except IOError as e:
-            log.critical("I/O error ({0}): {1} opening {2}".format(e.errno, e.strerror, template_pdf_filename))
+            log.critical(
+                "I/O error ({0}): {1} opening {2}".format(
+                    e.errno,
+                    e.strerror,
+                    template_pdf_filename,
+                )
+            )
             raise
 
         self.cert_label_singular = settings.get(
@@ -318,14 +326,7 @@ class CertificateGen(object):
         return (download_uuid, verify_uuid, download_url)
 
         verify_uuid will be None if there is no verification signature
-
         """
-        download_uuid = None
-        verify_uuid = None
-        download_url = None
-        s3_conn = None
-        bucket = None
-
         certificates_path = os.path.join(
             self.dir_prefix,
             settings.get('S3_CERT_PATH'),
@@ -334,57 +335,84 @@ class CertificateGen(object):
             self.dir_prefix,
             settings.get('S3_VERIFY_PATH'),
         )
-
-        (download_uuid, verify_uuid, download_url) = self._generate_certificate(student_name=name,
-                                                                                download_dir=certificates_path,
-                                                                                verify_dir=verify_path,
-                                                                                grade=grade,
-                                                                                designation=designation,)
-
+        (download_uuid, verify_uuid, download_url) = self._generate_certificate(
+            student_name=name,
+            download_dir=certificates_path,
+            verify_dir=verify_path,
+            grade=grade,
+            designation=designation,
+        )
         # upload generated certificate and verification files to S3,
         # or copy them to the web root. Or both.
         my_certs_path = os.path.join(certificates_path, download_uuid)
         my_verify_path = os.path.join(verify_path, verify_uuid)
-        if upload:
-            s3_conn = boto.connect_s3(
-                settings.get('CERT_AWS_ID'),
-                settings.get('CERT_AWS_KEY')
-            )
-            bucket = s3_conn.get_bucket(settings.get('CERT_BUCKET'))
         if upload or copy_to_webroot:
-            for subtree in (my_certs_path, my_verify_path):
-                for dirpath, dirnames, filenames in os.walk(subtree):
-                    for filename in filenames:
-                        local_path = os.path.join(dirpath, filename)
-                        dest_path = os.path.relpath(local_path, start=self.dir_prefix)
-                        publish_dest = os.path.join(cert_web_root, dest_path)
-
-                        if upload:
-                            try:
-                                key = Key(bucket, name=dest_path)
-                                key.set_contents_from_filename(local_path, policy='public-read')
-                            except:
-                                raise
-                            else:
-                                log.info("uploaded {local} to {s3path}".format(local=local_path, s3path=dest_path))
-
-                        if copy_to_webroot:
-                            try:
-                                dirname = os.path.dirname(publish_dest)
-                                if not os.path.exists(dirname):
-                                    os.makedirs(dirname)
-                                shutil.copy(local_path, publish_dest)
-                            except:
-                                raise
-                            else:
-                                log.info("published {local} to {web}".format(local=local_path, web=publish_dest))
-
+            _try_copy_and_or_upload(my_certs_path, my_verify_path, self.dir_prefix, cert_web_root)
         if cleanup:
             for working_dir in (certificates_path, verify_path):
                 if os.path.exists(working_dir):
                     shutil.rmtree(working_dir)
-
         return (download_uuid, verify_uuid, download_url)
+
+    def _try_copy_and_or_upload(my_certs_path, my_verify_path, dir_prefix, cert_web_root):
+        success = True
+        for subtree in (my_certs_path, my_verify_path):
+            for dirpath, dirnames, filenames in os.walk(subtree):
+                for filename in filenames:
+                    local_path = os.path.join(dirpath, filename)
+                    dest_path = os.path.relpath(
+                        local_path,
+                        start=self.dir_prefix,
+                    )
+                    publish_dest = os.path.join(cert_web_root, dest_path)
+                    if upload:
+                        success = _try_upload_s3(local_path, dest_path) and success
+                    if copy_to_webroot:
+                        success = _try_copy_webroot(local_path, publish_dest) and success
+        return success
+
+    def _try_upload_s3(local_path, dest_path):
+        s3_connection = boto.connect_s3(
+            settings.get('CERT_AWS_ID'),
+            settings.get('CERT_AWS_KEY')
+        )
+        bucket = s3_connection.get_bucket(settings.get('CERT_BUCKET'))
+        try:
+            key = Key(bucket, name=dest_path)
+            key.set_contents_from_filename(
+                local_path,
+                policy='public-read',
+            )
+        except Exception as error:
+            LOG.error('%s', error)
+            return False
+        log.info(
+            "uploaded {local} to {s3path}".format(
+                local=local_path,
+                s3path=dest_path,
+            )
+        )
+        return True
+
+    def _try_copy_webroot(local_path, publish_dest):
+        try:
+            dirname = os.path.dirname(publish_dest)
+            try:
+                os.makedirs(dirname)
+            except OSError:
+                pass
+            shutil.copy(local_path, publish_dest)
+        except Exception as error:
+            LOG.error('Failed to copy to webroot: %s', error)
+            return False
+        else:
+            log.info(
+                "published {local} to {web}".format(
+                    local=local_path,
+                    web=publish_dest,
+                )
+            )
+        return True
 
     def _generate_certificate(
         self,

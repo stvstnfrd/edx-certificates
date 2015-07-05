@@ -34,24 +34,30 @@ _path_module = os.path.dirname(_path_file)
 _path_package = os.path.dirname(_path_module)
 _path_application = os.path.dirname(_path_package)
 
-_auth = _load_json(_path_application, 'auth.json')
-_env = _load_json(_path_application, 'env.json')
-_default = _load_json(_path_module, 'config.json')
-_environ = _load_environ()
-_memory = {}
-_custom = {}
-_custom.update(_env)
-_custom.update(_auth)
 _all = {}
-_all.update(_default)
-_all.update(_custom)
-_all.update(_environ)
-
-_log_default = _load_json(_path_module, 'log.json')
-_log_custom = _load_json(_path_application, 'log.json')
+_memory = {}
 _log = {}
-_log.update(_log_default)
-# _log.update(_log_custom)
+
+
+def _reload():
+    global _all, _memory, _log
+    _auth = _load_json(_path_application, 'auth.json')
+    _env = _load_json(_path_application, 'env.json')
+    _default = _load_json(_path_module, 'config.json')
+    _environ = _load_environ()
+    _memory = {}
+    _custom = {}
+    _custom.update(_env)
+    _custom.update(_auth)
+    _all = {}
+    _all.update(_default)
+    _all.update(_custom)
+    _all.update(_environ)
+    _log_default = _load_json(_path_module, 'log.json')
+    _log_custom = _load_json(_path_application, 'log.json')
+    _log = {}
+    _log.update(_log_default)
+    # _log.update(_log_custom)
 
 
 def get(key, default=None, course_id=None):
@@ -69,6 +75,8 @@ def update(key, value):
     _all[key] = value
     return value
 
+
+_reload()
 
 if not get('CERT_GPG_DIR'):
     _cert_gpg_dir = "{0}/.gnupg".format(

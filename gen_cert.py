@@ -35,7 +35,7 @@ import tempfile
 import boto.s3
 from boto.s3.key import Key
 from bidi.algorithm import get_display
-import arabic_reshaper
+from openedx_certificates import arabic_reshaper
 
 from opaque_keys.edx.keys import CourseKey
 

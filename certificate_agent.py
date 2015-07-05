@@ -5,12 +5,11 @@ import json
 import sys
 import os
 import time
-
-from openedx_certificates import settings
+import settings
 from openedx_certificates.queue_xqueue import XQueuePullManager
 from gen_cert import CertificateGen
 
-logging.config.dictConfig(settings.get('LOGGING'))
+logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates: ' + __name__)
 
 
@@ -41,12 +40,12 @@ def parse_args(args=sys.argv[1:]):
 
     parser.add_argument(
         '--aws-id',
-        default=settings.get('CERT_AWS_ID'),
+        default=settings.CERT_AWS_ID,
         help='AWS ID for write access to the S3 bucket',
     )
     parser.add_argument(
         '--aws-key',
-        default=settings.get('CERT_AWS_KEY'),
+        default=settings.CERT_AWS_KEY,
         help='AWS KEY for write access to the S3 bucket',
     )
     return parser.parse_args()
@@ -54,14 +53,10 @@ def parse_args(args=sys.argv[1:]):
 
 def main():
 
-    manager = XQueuePullManager(
-        settings.get('QUEUE_URL'),
-        settings.get('QUEUE_NAME'),
-        settings.get('QUEUE_AUTH_USER'),
-        settings.get('QUEUE_AUTH_PASS'),
-        settings.get('QUEUE_USER'),
-        settings.get('QUEUE_PASS'),
-    )
+    manager = XQueuePullManager(settings.QUEUE_URL, settings.QUEUE_NAME,
+                                settings.QUEUE_AUTH_USER,
+                                settings.QUEUE_AUTH_PASS,
+                                settings.QUEUE_USER, settings.QUEUE_PASS)
     last_course = None  # The last course_id we generated for
     cert = None  # A CertificateGen instance for a particular course
 
@@ -110,7 +105,7 @@ def main():
                 last_course = course_id
         except (TypeError, ValueError, KeyError, IOError) as e:
             log.critical('Unable to parse queue submission ({0}) : {1}'.format(e, certdata))
-            if settings.get('DEBUG'):
+            if settings.DEBUG:
                 raise
             else:
                 continue
@@ -171,7 +166,7 @@ def main():
                 }),
             }
             manager.respond(xqueue_reply)
-            if settings.get('DEBUG'):
+            if settings.DEBUG:
                 raise
             else:
                 continue

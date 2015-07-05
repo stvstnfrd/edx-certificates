@@ -127,12 +127,6 @@ def main(args):
 
     for course in courses:
         for name in names:
-            print(args)
-            print(name, names)
-            print(course, courses)
-            print(grade)
-            print(should_try_upload)
-            print(certificate_data)
             cert = CertificateGen(
                 course,
                 # TODO: we shouldn't pass AWS creds along
@@ -169,32 +163,53 @@ def main(args):
                 course=course.replace('/', '-')
             )
 
-            try:
-                shutil.copyfile(
-                    "{0}/{1}".format(
-                        directory_output,
-                        settings.get('CERT_FILENAME'),
-                    ),
-                    unicode(copy_dest.decode('utf-8'))
-                )
-                raise Exception('wtf')
-            except Exception as error:
-                LOG.error(
-                    "{error}: {name}: {download_uuid}: {verify_uuid}: {download_uuid}: {directory_output}: {copy_dest}",
-                    {
-                        'error': error,
-                        'name': name,
-                        'download_uuid': download_uuid,
-                        'verify_uuid': verify_uuid,
-                        'download_uuid': download_uuid,
-                        'directory_output': directory_output,
-                        'copy_dest': copy_dest,
-                    },
-                )
-                raise
-            LOG.info("Created %s", copy_dest)
+            if _try_copy_file(
+                directory_output,
+                copy_dest,
+                name,
+                download_uuid,
+                verify_uuid,
+                download_uuid,
+            ):
+                LOG.info("Created %s", copy_dest)
+            else:
+                LOG.error("Unable to copy file: %s", copy_dest)
     _write_output(certificate_data, args.get('input'))
     LOG.debug('Closing %s', __name__)
+
+
+def _try_copy_file(
+    directory_output,
+    copy_dest,
+    name,
+    download_uuid,
+    verify_uuid,
+    download_uuid,
+):
+    try:
+        shutil.copyfile(
+            "{0}/{1}".format(
+                directory_output,
+                settings.get('CERT_FILENAME'),
+            ),
+            unicode(copy_dest.decode('utf-8'))
+        )
+    except Exception as error:
+        LOG.error(
+            "{error}: {name}: {download_uuid}: {verify_uuid}: {download_uuid}: {directory_output}: {copy_dest}",
+            {
+                'error': error,
+                'name': name,
+                'download_uuid': download_uuid,
+                'verify_uuid': verify_uuid,
+                'download_uuid': download_uuid,
+                'directory_output': directory_output,
+                'copy_dest': copy_dest,
+            },
+        )
+        raise
+    return True
+
 
 def _write_output(certificate_data, input_file=None):
     if input_file:

@@ -26,7 +26,7 @@ from glob import glob
 from HTMLParser import HTMLParser
 from babel.dates import format_date
 
-from openedx_certificates import settings
+import settings
 import collections
 import itertools
 import logging.config
@@ -35,23 +35,29 @@ import tempfile
 import boto.s3
 from boto.s3.key import Key
 from bidi.algorithm import get_display
-from openedx_certificates import arabic_reshaper
+import arabic_reshaper
 
 from opaque_keys.edx.keys import CourseKey
 
 reportlab.rl_config.warnOnMissingFontGlyphs = 0
 
-if not os.path.exists(settings.get('TMP_GEN_DIR')):
-    os.makedirs(settings.get('TMP_GEN_DIR'))
-
 
 RE_ISODATES = re.compile("(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})")
-logging.config.dictConfig(settings.get('LOGGING'))
+TEMPLATE_DIR = settings.TEMPLATE_DIR
+BUCKET = settings.CERT_BUCKET
+CERT_KEY_ID = settings.CERT_KEY_ID
+logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)
+S3_CERT_PATH = 'downloads'
+S3_VERIFY_PATH = getattr(settings, 'S3_VERIFY_PATH', 'cert')
+TARGET_FILENAME = getattr(settings, 'CERT_FILENAME', 'Certificate.pdf')
+TMP_GEN_DIR = getattr(settings, 'TMP_GEN_DIR', '/var/tmp/generated_certs')
+CERTS_ARE_CALLED = getattr(settings, 'CERTS_ARE_CALLED', 'certificate')
+CERTS_ARE_CALLED_PLURAL = getattr(settings, 'CERTS_ARE_CALLED_PLURAL', 'certificates')
 
 # reduce logging level for gnupg
-_log_gnupg = logging.getLogger('gnupg')
-_log_gnupg.setLevel('WARNING')
+l = logging.getLogger('gnupg')
+l.setLevel('WARNING')
 
 # Register all fonts in the fonts/ dir; there are likely more fonts here than
 # we need, but the performance hit is minimal -- especially since we only do
@@ -60,7 +66,7 @@ _log_gnupg.setLevel('WARNING')
 # While registering fonts, build a table of the Unicode code points in each
 # for use in font_for_string().
 FONT_CHARACTER_TABLES = {}
-for font_file in glob("{0}/fonts/*.ttf".format(settings.get('TEMPLATE_DIR'))):
+for font_file in glob('{0}/fonts/*.ttf'.format(TEMPLATE_DIR)):
     font_name = os.path.basename(os.path.splitext(font_file)[0])
     ttf = TTFont(font_name, font_file)
     FONT_CHARACTER_TABLES[font_name] = ttf.face.charToGlyph.keys()
@@ -69,38 +75,13 @@ for font_file in glob("{0}/fonts/*.ttf".format(settings.get('TEMPLATE_DIR'))):
 # These are small, so let's just load them at import time and keep them around
 # so we don't have to keep doing the file I/o
 BLANK_PDFS = {
-    'landscape-A4': PdfFileReader(
-        file(
-            "{0}/blank.pdf".format(
-                settings.get('TEMPLATE_DIR'),
-            ),
-            'rb'
-        )
-    ),
-    'landscape-letter': PdfFileReader(
-        file(
-            "{0}/blank-letter.pdf".format(
-                settings.get('TEMPLATE_DIR'),
-            ),
-            'rb'
-        )
-    ),
-    'portrait-A4': PdfFileReader(
-        file(
-            "{0}/blank-portrait-A4.pdf".format(
-                settings.get('TEMPLATE_DIR'),
-            ),
-            'rb'
-        )
-    ),
+    'landscape-A4': PdfFileReader(file("{0}/blank.pdf".format(TEMPLATE_DIR), "rb")),
+    'landscape-letter': PdfFileReader(file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb")),
+    'portrait-A4': PdfFileReader(file("{0}/blank-portrait-A4.pdf".format(TEMPLATE_DIR), "rb")),
 }
 
 
-def get_cert_date(
-    calling_date_parameter,
-    configured_date_parameter,
-    locale=settings.get('DEFAULT_LOCALE'),
-):
+def get_cert_date(calling_date_parameter, configured_date_parameter, locale=settings.DEFAULT_LOCALE):
     """Get pertinent date for display on cert
 
     - If cert passes a set date in 'calling_date_parameter', format that
@@ -113,7 +94,7 @@ def get_cert_date(
     elif configured_date_parameter == "ROLLING":
         date_value = format_date(datetime.date.today(), format='long', locale=locale)
     else:
-        date_value = configured_date_parameter
+        date_value = format_date(configured_date_parameter, format='long', locale=locale)
 
     date_string = u"{0}".format(date_value)
 
@@ -204,7 +185,7 @@ class CertificateGen(object):
         aws_id       - necessary for S3 uploads
         aws_key      - necessary for S3 uploads
 
-        course_id is used to look up extra data from CERT_DATA,
+        course_id is used to look up extra data from settings.CERT_DATA,
         including (but not necessarily limited to):
           * LONG_ORG     - long name for the organization
           * ISSUED_DATE  - month, year that corresponds to the
@@ -213,18 +194,14 @@ class CertificateGen(object):
                            template_pdf parameter
         """
         if dir_prefix is None:
-            dir_prefix = tempfile.mkdtemp(
-                prefix='cert-',
-                dir=settings.get('TMP_GEN_DIR'),
-            )
-            # dir_prefix = tempfile.mkdtemp(prefix=settings.get('TMP_GEN_DIR'))
+            dir_prefix = tempfile.mkdtemp(prefix=TMP_GEN_DIR)
         self._ensure_dir(dir_prefix)
         self.dir_prefix = dir_prefix
 
         self.aws_id = str(aws_id)
         self.aws_key = str(aws_key)
 
-        cert_data = settings.get('CERT_DATA').get(course_id, {})
+        cert_data = settings.CERT_DATA.get(course_id, {})
         self.cert_data = cert_data
 
         def interstitial_factory():
@@ -233,7 +210,7 @@ class CertificateGen(object):
 
         # lookup long names from the course_id
         try:
-            self.long_org = long_org or cert_data.get('LONG_ORG', '').encode('utf-8') or settings.get('DEFAULT_ORG')
+            self.long_org = long_org or cert_data.get('LONG_ORG', '').encode('utf-8') or settings.DEFAULT_ORG
             self.long_course = long_course or cert_data.get('LONG_COURSE', '').encode('utf-8')
             self.issued_date = issued_date or cert_data.get('ISSUED_DATE', '').encode('utf-8') or 'ROLLING'
             self.interstitial_texts = collections.defaultdict(interstitial_factory())
@@ -242,7 +219,7 @@ class CertificateGen(object):
                 for key, value in cert_data.get('interstitial', {}).items()
             }
             self.interstitial_texts.update(interstitial_dict)
-            self.locale = cert_data.get('locale', settings.get('DEFAULT_LOCALE')).encode('utf-8')
+            self.locale = cert_data.get('locale', settings.DEFAULT_LOCALE).encode('utf-8')
             self.course_translations = cert_data.get('translations', {})
         except KeyError:
             log.critical("Unable to lookup long names for course {0}".format(course_id))
@@ -265,50 +242,29 @@ class CertificateGen(object):
         # Else if a value is passed in to the constructor (eg, from xqueue), it is used,
         # Else, the filename is calculated from the version and course_id.
         template_pdf = cert_data.get('TEMPLATEFILE', template_pdf)
-        template_prefix = "{0}/v{1}-cert-templates".format(
-            settings.get('TEMPLATE_DIR'),
-            self.template_version,
-        )
+        template_prefix = '{0}/v{1}-cert-templates'.format(TEMPLATE_DIR, self.template_version)
         template_pdf_filename = "{0}/certificate-template-{1}-{2}.pdf".format(template_prefix, self.org, self.course)
         if template_pdf:
             template_pdf_filename = "{0}/{1}".format(template_prefix, template_pdf)
             if 'verified' in template_pdf:
                 self.template_type = 'verified'
-        print('w00t')
-        return
         try:
             self.template_pdf = PdfFileReader(file(template_pdf_filename, "rb"))
         except IOError as e:
-            log.critical(
-                "I/O error ({0}): {1} opening {2}".format(
-                    e.errno,
-                    e.strerror,
-                    template_pdf_filename,
-                )
-            )
+            log.critical("I/O error ({0}): {1} opening {2}".format(e.errno, e.strerror, template_pdf_filename))
             raise
 
-        self.cert_label_singular = settings.get(
-            'CERTS_ARE_CALLED',
-            course_id=course_id,
-        )
-        self.cert_label_plural = settings.get(
-            'CERTS_ARE_CALLED_PLURAL',
-            course_id=course_id,
-        )
-        self.course_association_text = settings.get(
-            'COURSE_ASSOCIATION_TEXT',
-            'a course of study',
-            course_id=course_id,
-        )
+        self.cert_label_singular = cert_data.get('CERTS_ARE_CALLED', CERTS_ARE_CALLED)
+        self.cert_label_plural = cert_data.get('CERTS_ARE_CALLED_PLURAL', CERTS_ARE_CALLED_PLURAL)
+        self.course_association_text = cert_data.get('COURSE_ASSOCIATION_TEXT', 'a course of study')
 
     def create_and_upload(
         self,
         name,
-        upload=settings.get('S3_UPLOAD'),
+        upload=settings.S3_UPLOAD,
         cleanup=True,
-        copy_to_webroot=settings.get('COPY_TO_WEB_ROOT'),
-        cert_web_root=settings.get('CERT_WEB_ROOT'),
+        copy_to_webroot=settings.COPY_TO_WEB_ROOT,
+        cert_web_root=settings.CERT_WEB_ROOT,
         grade=None,
         designation=None,
     ):
@@ -326,100 +282,71 @@ class CertificateGen(object):
         return (download_uuid, verify_uuid, download_url)
 
         verify_uuid will be None if there is no verification signature
+
         """
-        certificates_path = os.path.join(
-            self.dir_prefix,
-            settings.get('S3_CERT_PATH'),
-        )
-        verify_path = os.path.join(
-            self.dir_prefix,
-            settings.get('S3_VERIFY_PATH'),
-        )
-        (download_uuid, verify_uuid, download_url) = self._generate_certificate(
-            student_name=name,
-            download_dir=certificates_path,
-            verify_dir=verify_path,
-            grade=grade,
-            designation=designation,
-        )
+        download_uuid = None
+        verify_uuid = None
+        download_url = None
+        s3_conn = None
+        bucket = None
+
+        certificates_path = os.path.join(self.dir_prefix, S3_CERT_PATH)
+        verify_path = os.path.join(self.dir_prefix, S3_VERIFY_PATH)
+
+        (download_uuid, verify_uuid, download_url) = self._generate_certificate(student_name=name,
+                                                                                download_dir=certificates_path,
+                                                                                verify_dir=verify_path,
+                                                                                grade=grade,
+                                                                                designation=designation,)
+
         # upload generated certificate and verification files to S3,
         # or copy them to the web root. Or both.
         my_certs_path = os.path.join(certificates_path, download_uuid)
         my_verify_path = os.path.join(verify_path, verify_uuid)
+        if upload:
+            s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
+            bucket = s3_conn.get_bucket(BUCKET)
         if upload or copy_to_webroot:
-            _try_copy_and_or_upload(my_certs_path, my_verify_path, self.dir_prefix, cert_web_root)
+            for subtree in (my_certs_path, my_verify_path):
+                for dirpath, dirnames, filenames in os.walk(subtree):
+                    for filename in filenames:
+                        local_path = os.path.join(dirpath, filename)
+                        dest_path = os.path.relpath(local_path, start=self.dir_prefix)
+                        publish_dest = os.path.join(cert_web_root, dest_path)
+
+                        if upload:
+                            try:
+                                key = Key(bucket, name=dest_path)
+                                key.set_contents_from_filename(local_path, policy='public-read')
+                            except:
+                                raise
+                            else:
+                                log.info("uploaded {local} to {s3path}".format(local=local_path, s3path=dest_path))
+
+                        if copy_to_webroot:
+                            try:
+                                dirname = os.path.dirname(publish_dest)
+                                if not os.path.exists(dirname):
+                                    os.makedirs(dirname)
+                                shutil.copy(local_path, publish_dest)
+                            except:
+                                raise
+                            else:
+                                log.info("published {local} to {web}".format(local=local_path, web=publish_dest))
+
         if cleanup:
             for working_dir in (certificates_path, verify_path):
                 if os.path.exists(working_dir):
                     shutil.rmtree(working_dir)
+
         return (download_uuid, verify_uuid, download_url)
-
-    def _try_copy_and_or_upload(my_certs_path, my_verify_path, dir_prefix, cert_web_root):
-        success = True
-        for subtree in (my_certs_path, my_verify_path):
-            for dirpath, dirnames, filenames in os.walk(subtree):
-                for filename in filenames:
-                    local_path = os.path.join(dirpath, filename)
-                    dest_path = os.path.relpath(
-                        local_path,
-                        start=self.dir_prefix,
-                    )
-                    publish_dest = os.path.join(cert_web_root, dest_path)
-                    if upload:
-                        success = _try_upload_s3(local_path, dest_path) and success
-                    if copy_to_webroot:
-                        success = _try_copy_webroot(local_path, publish_dest) and success
-        return success
-
-    def _try_upload_s3(local_path, dest_path):
-        s3_connection = boto.connect_s3(
-            settings.get('CERT_AWS_ID'),
-            settings.get('CERT_AWS_KEY')
-        )
-        bucket = s3_connection.get_bucket(settings.get('CERT_BUCKET'))
-        try:
-            key = Key(bucket, name=dest_path)
-            key.set_contents_from_filename(
-                local_path,
-                policy='public-read',
-            )
-        except Exception as error:
-            LOG.error('%s', error)
-            return False
-        log.info(
-            "uploaded {local} to {s3path}".format(
-                local=local_path,
-                s3path=dest_path,
-            )
-        )
-        return True
-
-    def _try_copy_webroot(local_path, publish_dest):
-        try:
-            dirname = os.path.dirname(publish_dest)
-            try:
-                os.makedirs(dirname)
-            except OSError:
-                pass
-            shutil.copy(local_path, publish_dest)
-        except Exception as error:
-            LOG.error('Failed to copy to webroot: %s', error)
-            return False
-        else:
-            log.info(
-                "published {local} to {web}".format(
-                    local=local_path,
-                    web=publish_dest,
-                )
-            )
-        return True
 
     def _generate_certificate(
         self,
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
     ):
@@ -450,7 +377,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
     ):
@@ -459,11 +386,8 @@ class CertificateGen(object):
         verify_uuid = uuid.uuid4().hex
         download_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
-            uuid=download_uuid,
-            file=filename,
-        )
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH, uuid=download_uuid, file=filename)
         filename = os.path.join(download_dir, download_uuid, filename)
 
         # This file is overlaid on the template certificate
@@ -679,8 +603,8 @@ class CertificateGen(object):
             "{verify_url}/{verify_path}/{verify_uuid}</a>"
 
         paragraph_string = paragraph_string.format(
-            verify_url=settings.get('CERT_VERIFY_URL'),
-            verify_path=settings.get('S3_VERIFY_PATH'),
+            verify_url=settings.CERT_VERIFY_URL,
+            verify_path=S3_VERIFY_PATH,
             verify_uuid=verify_uuid)
         paragraph = Paragraph(paragraph_string, styleOpenSansLight)
 
@@ -725,7 +649,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
     ):
@@ -740,10 +664,8 @@ class CertificateGen(object):
         verify_uuid = uuid.uuid4().hex
         download_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
-            uuid=download_uuid,
-            file=filename,
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH, uuid=download_uuid, file=filename
         )
         filename = os.path.join(download_dir, download_uuid, filename)
 
@@ -976,11 +898,9 @@ class CertificateGen(object):
         x_offset = pos_footer_url_x
         paragraph_string = "<a href='https://{bucket}/{verify_path}/{verify_uuid}'>" \
                            "https://{bucket}/{verify_path}/{verify_uuid}</a>"
-        paragraph_string = paragraph_string.format(
-            bucket=settings.get('CERT_BUCKET'),
-            verify_path=settings.get('S3_VERIFY_PATH'),
-            verify_uuid=verify_uuid,
-        )
+        paragraph_string = paragraph_string.format(bucket=BUCKET,
+                                                   verify_path=S3_VERIFY_PATH,
+                                                   verify_uuid=verify_uuid)
 
         paragraph = Paragraph(paragraph_string, styleAvenirFooter)
 
@@ -1026,7 +946,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
     ):
@@ -1040,10 +960,8 @@ class CertificateGen(object):
         download_uuid = uuid.uuid4().hex
         verify_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
-            uuid=download_uuid,
-            file=filename,
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH, uuid=download_uuid, file=filename
         )
 
         filename = os.path.join(download_dir, download_uuid, filename)
@@ -1143,12 +1061,7 @@ class CertificateGen(object):
         # (much faster)
 
         blank_pdf = PdfFileReader(
-            file(
-                "{0}/blank-letter.pdf".format(
-                    settings.get('TEMPLATE_DIR'),
-                ),
-                'rb'
-            )
+            file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb")
         )
 
         final_certificate = blank_pdf.getPage(0)
@@ -1178,7 +1091,7 @@ class CertificateGen(object):
         download_url - link to the pdf download (for the verifcation page)"""
 
         # Do not do anything if there isn't any GPG Key to sign with
-        if not settings.get('CERT_KEY_ID'):
+        if not CERT_KEY_ID:
             return
 
         prefix = ''
@@ -1191,28 +1104,23 @@ class CertificateGen(object):
         signature_filename = os.path.basename(filename) + ".sig"
         signature_filename = os.path.join(output_dir, verify_uuid, signature_filename)
         self._ensure_dir(signature_filename)
-        gpg = gnupg.GPG(homedir=settings.get('CERT_GPG_DIR'))
+        gpg = gnupg.GPG(homedir=settings.CERT_GPG_DIR)
         gpg.encoding = 'utf-8'
         with open(filename) as f:
-            signed_data = gpg.sign(
-                data=f,
-                default_key=settings.get('CERT_KEY_ID'),
-                clearsign=False,
-                detach=True,
-            ).data
+            signed_data = gpg.sign(data=f, default_key=CERT_KEY_ID, clearsign=False, detach=True).data
         with open(signature_filename, 'w') as f:
             f.write(signed_data.encode('utf-8'))
 
         # create the validation page
         signature_download_url = "{verify_url}/{verify_path}/{verify_uuid}/{verify_filename}".format(
-            verify_url=settings.get('CERT_VERIFY_URL'),
-            verify_path=settings.get('S3_VERIFY_PATH'),
+            verify_url=settings.CERT_VERIFY_URL,
+            verify_path=S3_VERIFY_PATH,
             verify_uuid=verify_uuid,
             verify_filename=os.path.basename(signature_filename))
 
         verify_page_url = "{verify_url}/{verify_path}/{verify_uuid}/verify.html".format(
-            verify_url=settings.get('CERT_VERIFY_URL'),
-            verify_path=settings.get('S3_VERIFY_PATH'),
+            verify_url=settings.CERT_VERIFY_URL,
+            verify_path=S3_VERIFY_PATH,
             verify_uuid=verify_uuid)
 
         type_map = {
@@ -1242,7 +1150,7 @@ class CertificateGen(object):
         )
         type_map['honor']['img'] = ""
 
-        with open("{0}/{1}".format(settings.get('TEMPLATE_DIR'), valid_template)) as f:
+        with open("{0}/{1}".format(TEMPLATE_DIR, valid_template)) as f:
             valid_page = f.read().decode('utf-8')
         valid_page = valid_page.format(
             COURSE=self.course.decode('utf-8'),
@@ -1258,8 +1166,8 @@ class CertificateGen(object):
             TYPE_NAME=type_map[self.template_type]['type_name'],
             ISSUE_DATE=self.issued_date,
             IMG=type_map[self.template_type]['img'],
-            CERTS_ARE_CALLED=settings.get('CERTS_ARE_CALLED').title(),
-            CERTS_ARE_CALLED_PLURAL=settings.get('CERTS_ARE_CALLED_PLURAL').title(),
+            CERTS_ARE_CALLED=CERTS_ARE_CALLED.title(),
+            CERTS_ARE_CALLED_PLURAL=CERTS_ARE_CALLED_PLURAL.title(),
             EXPLANATION=type_map[self.template_type]['explanation'],
         )
 
@@ -1267,14 +1175,14 @@ class CertificateGen(object):
                 output_dir, verify_uuid, "valid.html"), 'w') as f:
             f.write(valid_page.encode('utf-8'))
 
-        with open("{0}/{1}".format(settings.get('TEMPLATE_DIR'), verify_template)) as f:
+        with open("{0}/{1}".format(TEMPLATE_DIR, verify_template)) as f:
             verify_page = f.read().decode('utf-8').format(
                 NAME=name.decode('utf-8'),
                 SIG_URL=signature_download_url,
                 SIG_FILE=os.path.basename(signature_download_url),
-                CERT_KEY_ID=settings.get('CERT_KEY_ID'),
-                CERTS_ARE_CALLED=settings.get('CERTS_ARE_CALLED').title(),
-                CERTS_ARE_CALLED_PLURAL=settings.get('CERTS_ARE_CALLED_PLURAL').title(),
+                CERT_KEY_ID=CERT_KEY_ID,
+                CERTS_ARE_CALLED=CERTS_ARE_CALLED.title(),
+                CERTS_ARE_CALLED_PLURAL=CERTS_ARE_CALLED_PLURAL.title(),
                 VERIFY_URL=verify_page_url,
                 PDF_FILE=os.path.basename(download_url)
             )
@@ -1329,7 +1237,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
         generate_date=None,
@@ -1343,7 +1251,7 @@ class CertificateGen(object):
 
         OPTIONAL PARAMETERS:
         filename      - the filename to write out, i.e., 'Certificate.pdf'.
-                        Defaults to settings.CERT_FILENAME
+                        Defaults to settings.TARGET_FILENAME
         grade         - the grade received by the student. Defaults to 'Pass'
         generate_date - specifies an ISO formatted date (i.e., '2012-02-02')
                         with which to stamp the cert. Defaults to CERT_DATA's
@@ -1370,11 +1278,8 @@ class CertificateGen(object):
         verify_uuid = uuid.uuid4().hex if verify_me_p else ''
         download_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
-            uuid=download_uuid,
-            file=filename,
-        )
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH, uuid=download_uuid, file=filename)
 
         filename = os.path.join(download_dir, download_uuid, filename)
 
@@ -1510,8 +1415,8 @@ class CertificateGen(object):
             )
             paragraph_string = paragraph_string.format(
                 cert_label=self.cert_label_singular,
-                verify_url=settings.get('CERT_VERIFY_URL'),
-                verify_path=settings.get('S3_VERIFY_PATH'),
+                verify_url=settings.CERT_VERIFY_URL,
+                verify_path=S3_VERIFY_PATH,
                 verify_uuid=verify_uuid,
             )
             paragraph = Paragraph(paragraph_string, styleSourceSansPro)
@@ -1556,7 +1461,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
         generate_date=None,
@@ -1570,7 +1475,7 @@ class CertificateGen(object):
 
         OPTIONAL PARAMETERS:
         filename      - the filename to write out, i.e., 'Certificate.pdf'.
-                        Defaults to settings.CERT_FILENAME
+                        Defaults to settings.TARGET_FILENAME
         grade         - the grade received by the student. Defaults to 'Pass'
         generate_date - specifies an ISO formatted date (i.e., '2012-02-02')
                         with which to stamp the cert. Defaults to CERT_DATA's
@@ -1609,8 +1514,8 @@ class CertificateGen(object):
 
         download_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH,
             uuid=download_uuid,
             file=filename,
         )
@@ -1751,7 +1656,7 @@ class CertificateGen(object):
         student_name,
         download_dir,
         verify_dir,
-        filename=settings.get('CERT_FILENAME'),
+        filename=TARGET_FILENAME,
         grade=None,
         designation=None,
         generate_date=None,
@@ -1765,7 +1670,7 @@ class CertificateGen(object):
 
         OPTIONAL PARAMETERS:
         filename      - the filename to write out, e.g., 'Statement.pdf'.
-                        Defaults to settings.CERT_FILENAME.
+                        Defaults to settings.TARGET_FILENAME.
         grade         - the grade received by the student. Defaults to 'Pass'
         generate_date - specifies an ISO formatted date (i.e., '2012-02-02')
                         with which to stamp the cert. Defaults to CERT_DATA's
@@ -1794,8 +1699,8 @@ class CertificateGen(object):
         verify_uuid = uuid.uuid4().hex if verify_me_p else ''
         download_uuid = uuid.uuid4().hex
         download_url = "{base_url}/{cert}/{uuid}/{file}".format(
-            base_url=settings.get('CERT_DOWNLOAD_URL'),
-            cert=settings.get('S3_CERT_PATH'),
+            base_url=settings.CERT_DOWNLOAD_URL,
+            cert=S3_CERT_PATH,
             uuid=download_uuid,
             file=filename,
         )
@@ -1923,7 +1828,7 @@ class CertificateGen(object):
         yOffset = minYOffset + ((max_height - height) / 2)
         paragraph.drawOn(PAGE, GUTTER_WIDTH - (name_style.fontSize / 12), yOffset)
 
-        default_translation = settings.get('DEFAULT_TRANSLATIONS').get(settings.get('DEFAULT_LOCALE'), {})
+        default_translation = settings.DEFAULT_TRANSLATIONS.get(settings.DEFAULT_LOCALE, {})
         successfully_completed = default_translation.get('success_text', '')
         grade_interstitial = default_translation.get('grade_interstitial', '')
         disclaimer_text = default_translation.get('disclaimer_text', '')
@@ -2017,8 +1922,8 @@ class CertificateGen(object):
                 u"<b>{verify_url}/{verify_path}/{verify_uuid}</b>"
                 u"</a>"
             ).encode('utf-8').format(
-                verify_url=settings.get('CERT_VERIFY_URL'),
-                verify_path=settings.get('S3_VERIFY_PATH'),
+                verify_url=settings.CERT_VERIFY_URL,
+                verify_path=S3_VERIFY_PATH,
                 verify_uuid=verify_uuid,
             )
 

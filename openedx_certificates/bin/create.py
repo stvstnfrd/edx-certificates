@@ -28,7 +28,6 @@ import sys
 
 from gen_cert import CertificateGen
 from openedx_certificates import settings
-from tests.test_data import NAMES
 
 
 logging.config.dictConfig(settings.get('LOGGING'))
@@ -48,29 +47,14 @@ def parse_args():
     parser.add_argument(
         '-n',
         '--name',
-        help='optional name for the cert',
+        help='optional names for the cert',
+        action='append',
+        dest='names',
     )
     parser.add_argument(
         '-g',
         '--grade',
         help='optional grading label to apply',
-    )
-    parser.add_argument(
-        '-i',
-        '--input',
-        help='optional input CSV file to seed generation',
-    )
-    parser.add_argument(
-        '-o',
-        '--output',
-        help='file for generated output (TODO: default to stdout)',
-    )
-    parser.add_argument(
-        '-u',
-        '--upload',
-        help='upload generated certs (default to S3)',
-        default=False,
-        action='store_true',
     )
 
     parser.add_argument(
@@ -94,30 +78,13 @@ def main(args):
     LOG.debug('Launching %s', __name__)
     copy_dir = settings.get('TMP_GEN_DIR') + "+copy"
     certificate_data = []
-    should_try_upload = args.get('upload')
     course = args.get('course')
     courses = settings.get('CERT_DATA').keys()
     grade = args.get('grade')
-    name = args.get('name')
-    names = NAMES
-    path_input = args.get('input')
+    names = args.get('names', [])
 
     if course:
         courses = [course]
-    if name:
-        names = [name]
-    elif path_input:
-        LOG.debug('Loading input file: %s', path_input)
-        try:
-            with open(path_input) as file_input:
-                names = [
-                    line.rstrip()
-                    for line in file_input.readlines()
-                ]
-        except OSError:
-            LOG.debug('No file: %s', path_input)
-            pass
-        LOG.debug('Loaded input file: %s: %s', path_input, names)
 
     try:
         os.makedirs(copy_dir)
@@ -138,7 +105,7 @@ def main(args):
                 title = random.choice(stanford_cme_titles)[0]
             (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
                 name,
-                upload=should_try_upload,
+                upload=settings.get('S3_UPLOAD'),
                 copy_to_webroot=False,
                 cleanup=False,
                 designation=title,
@@ -169,12 +136,12 @@ def main(args):
                 name,
                 download_uuid,
                 verify_uuid,
-                download_uuid,
             ):
                 LOG.info("Created %s", copy_dest)
             else:
                 LOG.error("Unable to copy file: %s", copy_dest)
-    _write_output(certificate_data, args.get('input'))
+    csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_ALL)
+    csv_writer.writerows(rows)
     LOG.debug('Closing %s', __name__)
 
 
@@ -184,7 +151,6 @@ def _try_copy_file(
     name,
     download_uuid,
     verify_uuid,
-    download_uuid,
 ):
     try:
         shutil.copyfile(
@@ -209,25 +175,6 @@ def _try_copy_file(
         )
         raise
     return True
-
-
-def _write_output(certificate_data, input_file=None):
-    if input_file:
-        LOG.debug('Write output to file: %s: %s', input_file, certificate_data)
-        try:
-            with open(input_file, 'wb') as file_report:
-                _write(certificate_data, file_report)
-            LOG.debug('Wrote output to file')
-        except IOError as error:
-            LOG.error("Unable to open report file: %s", error)
-    else:
-        LOG.debug('Write output to stdout: %s: %s', input_file, certificate_data)
-        _write(certificate_data, sys.stdout)
-        LOG.debug('Wrote output to file')
-
-def _write(rows, file_output):
-    csv_writer = csv.writer(file_output, quoting=csv.QUOTE_ALL)
-    csv_writer.writerows(rows)
 
 
 if __name__ == '__main__':

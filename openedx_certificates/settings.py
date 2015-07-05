@@ -38,12 +38,20 @@ _auth = _load_json(_path_application, 'auth.json')
 _env = _load_json(_path_application, 'env.json')
 _default = _load_json(_path_module, 'config.json')
 _environ = _load_environ()
+_memory = {}
 _custom = {}
+_custom.update(_env)
+_custom.update(_auth)
 _all = {}
 _all.update(_default)
-_all.update(_env)
-_all.update(_auth)
+_all.update(_custom)
 _all.update(_environ)
+
+_log_default = _load_json(_path_module, 'log.json')
+_log_custom = _load_json(_path_application, 'log.json')
+_log = {}
+_log.update(_log_default)
+# _log.update(_log_custom)
 
 
 def get(key, default=None, course_id=None):
@@ -57,7 +65,7 @@ def get(key, default=None, course_id=None):
 
 
 def update(key, value):
-    _custom[key] = value
+    _memory[key] = value
     _all[key] = value
     return value
 
@@ -88,11 +96,4 @@ if get('CERT_DATA_FILE') and get('CERT_PRIVATE_DIR'):
         _cert_data = {}
     update('CERT_DATA', _cert_data)
 
-_logging = get_logger_config(
-    get('LOG_DIR', _path_application),
-    logging_env=get('LOGGING_ENV'),
-    local_loglevel=get('LOCAL_LOGLEVEL'),
-    debug=get('DEBUG'),
-    dev_env=get('LOGGING_DEV_ENV'),
-)
-update('LOGGING', _logging)
+update('LOGGING', _log)

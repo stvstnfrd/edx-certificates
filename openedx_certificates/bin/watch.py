@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Generate edX certificates
--------------------------
+Generate OpenEdX certificates
+-----------------------------
 
 This script will continuously monitor a queue for certificate
 generation, it does the following:
@@ -11,10 +11,6 @@ generation, it does the following:
     * Pull a single certificate request
     * Process the request
     * Post a result back to the xqueue server
-
-A global exception handler will catch any error during the certificate
-generation process and post a result back to the LMS indicating there
-was a problem.
 
 CHANGELOG: Don't pass AWS secrets via command line
     - You can see these with `ps`!

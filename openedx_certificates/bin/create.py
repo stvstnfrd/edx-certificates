@@ -5,12 +5,6 @@ This is a standalone utility for generating certficiates.
 It will use test data in tests/test_data.py for names and courses.
 PDFs by default will be dropped in TMP_GEN_DIR for review
 
-TODO: modes
-- read from CSV: create many certs
-- read from command line: create single cert
-- write output to CSV and/or stdout
-- optionally upload to S3
-
 CHANGELOG:
 - report output format is changed:
     - was: name, course, args.long_org, args.long_course, download_url,
@@ -21,13 +15,15 @@ CHANGELOG:
 from argparse import ArgumentParser, RawTextHelpFormatter
 import csv
 import logging
+import logging.config
 import os
 import random
 import shutil
 import sys
 
-from gen_cert import CertificateGen
+# from gen_cert import CertificateGen
 from openedx_certificates import settings
+from openedx_certificates import exceptions
 
 
 logging.config.dictConfig(settings.get('LOGGING'))
@@ -43,6 +39,8 @@ def parse_args():
         '-c',
         '--course',
         help='optional course_id',
+        action='append',
+        dest='courses',
     )
     parser.add_argument(
         '-n',
@@ -55,14 +53,13 @@ def parse_args():
         '-g',
         '--grade',
         help='optional grading label to apply',
+        # default='Pass',
     )
 
     parser.add_argument(
-        '-T',
-        '--title-random',
-        help='add random title after name',
-        default=False,
-        action='store_true',
+        '-t',
+        '--title',
+        help='add title after name',
     )
     args = parser.parse_args()
     args = vars(args)
@@ -76,82 +73,85 @@ def main(args):
     Will copy out the pdfs into the certs/ dir
     """
     LOG.debug('Launching %s', __name__)
-    copy_dir = settings.get('TMP_GEN_DIR') + "+copy"
     certificate_data = []
-    course = args.get('course')
-    courses = settings.get('CERT_DATA').keys()
+    courses = args.get('courses') or settings.get('CERT_DATA').keys()
     grade = args.get('grade')
     names = args.get('names', [])
+    title = args.get('title')
+    if title:
+        title = (title, title)  # form of ('PhD', 'PhD')
+    _process_all_certs(courses, names, grade, title)
+    LOG.debug('Closing %s', __name__)
 
-    if course:
-        courses = [course]
 
+def _process_all_certs(courses, names, grade, title):
+    copy_dir = settings.get('TMP_GEN_DIR') + "+copy"
     try:
         os.makedirs(copy_dir)
         LOG.debug('Makedirs: %s', copy_dir)
     except OSError:
         pass
-
+    csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_ALL)
     for course in courses:
         for name in names:
-            cert = CertificateGen(
-                course,
-                # TODO: we shouldn't pass AWS creds along
-                aws_id=settings.get('CERT_AWS_ID'),
-                aws_key=settings.get('CERT_AWS_KEY'),
-            )
-            title = None
-            if args.get('title_random'):
-                title = random.choice(stanford_cme_titles)[0]
-            (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
-                name,
-                upload=settings.get('S3_UPLOAD'),
-                copy_to_webroot=False,
-                cleanup=False,
-                designation=title,
-                grade=grade,
-            )
-            certificate_data.append(
-                (
-                    course,
-                    name,
-                    grade,
-                    download_url,
-                )
-            )
-            directory_output = os.path.join(
-                cert.dir_prefix,
-                settings.get('S3_CERT_PATH'),
-                download_uuid,
-            )
-            copy_dest = "{copy_dir}/{course}-{name}.pdf".format(
-                copy_dir=copy_dir,
-                name=name.replace(' ', '-').replace('/', '-'),
-                course=course.replace('/', '-')
-            )
+            print(course, name, grade, title)
+            continue
+            row = _process_single_cert(course, name, grade, title)
+            csv_writer.writerow(row)
 
-            if _try_copy_file(
-                directory_output,
-                copy_dest,
-                name,
-                download_uuid,
-                verify_uuid,
-            ):
-                LOG.info("Created %s", copy_dest)
-            else:
-                LOG.error("Unable to copy file: %s", copy_dest)
-    csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_ALL)
-    csv_writer.writerows(rows)
-    LOG.debug('Closing %s', __name__)
-
+def _process_single_cert(course, name, grade, title, copy_dir):
+    cert = CertificateGen(
+        course,
+        # TODO: we shouldn't pass AWS creds along
+        aws_id=settings.get('CERT_AWS_ID'),
+        aws_key=settings.get('CERT_AWS_KEY'),
+    )
+    (download_uuid, verify_uuid, download_url) = cert.create_and_upload(
+        name,
+        upload=settings.get('S3_UPLOAD'),
+        copy_to_webroot=False,
+        cleanup=False,
+        designation=title,
+        grade=grade,
+    )
+    certificate_data.append(
+        (
+            course,
+            name,
+            grade,
+            download_url,
+        )
+    )
+    directory_output = os.path.join(
+        cert.dir_prefix,
+        settings.get('S3_CERT_PATH'),
+        download_uuid,
+    )
+    copy_dest = _try_copy_file(
+        directory_output,
+        name,
+        course,
+        download_uuid,
+        verify_uuid,
+        copy_dir,
+    )
+    if copy_dest:
+        LOG.info("Created %s", copy_dest)
 
 def _try_copy_file(
     directory_output,
     copy_dest,
     name,
+    course,
     download_uuid,
     verify_uuid,
+    copy_dir,
 ):
+    copy_dest = "{copy_dir}/{course}-{name}.pdf".format(
+        copy_dir=copy_dir,
+        name=name.replace(' ', '-').replace('/', '-'),
+        course=course.replace('/', '-')
+    )
     try:
         shutil.copyfile(
             "{0}/{1}".format(
@@ -161,20 +161,14 @@ def _try_copy_file(
             unicode(copy_dest.decode('utf-8'))
         )
     except Exception as error:
-        LOG.error(
-            "{error}: {name}: {download_uuid}: {verify_uuid}: {download_uuid}: {directory_output}: {copy_dest}",
-            {
-                'error': error,
-                'name': name,
-                'download_uuid': download_uuid,
-                'verify_uuid': verify_uuid,
-                'download_uuid': download_uuid,
-                'directory_output': directory_output,
-                'copy_dest': copy_dest,
-            },
-        )
-        raise
-    return True
+        body = {
+            'username': name,
+            'course_id': course,
+        }
+        message = exceptions.prettify(error, body=body)
+        LOG.error('%s', error)
+        return None
+    return copy_dest
 
 
 if __name__ == '__main__':

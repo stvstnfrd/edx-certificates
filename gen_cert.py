@@ -204,6 +204,15 @@ class CertificateGen(object):
         cert_data = settings.CERT_DATA.get(course_id, {})
         self.cert_data = cert_data
 
+        self.versionmap = {
+            1: self._generate_v1_certificate,
+            2: self._generate_v2_certificate,
+            'MIT_PE': self._generate_mit_pe_certificate,
+            'stanford': self._generate_stanford_SOA,
+            '3_dynamic': self._generate_v3_dynamic_certificate,
+            'stanford_cme': self._generate_stanford_cme_certificate,
+        }
+
         def interstitial_factory():
             """ Generate default values for interstitial_texts defaultdict """
             return itertools.repeat(cert_data.get('interstitial', {}).get('Pass', '')).next
@@ -284,25 +293,22 @@ class CertificateGen(object):
         verify_uuid will be None if there is no verification signature
 
         """
-        download_uuid = None
-        verify_uuid = None
-        download_url = None
-        s3_conn = None
-        bucket = None
+        download_dir = os.path.join(self.dir_prefix, S3_CERT_PATH)
+        verify_dir = os.path.join(self.dir_prefix, S3_VERIFY_PATH)
 
-        certificates_path = os.path.join(self.dir_prefix, S3_CERT_PATH)
-        verify_path = os.path.join(self.dir_prefix, S3_VERIFY_PATH)
-
-        (download_uuid, verify_uuid, download_url) = self._generate_certificate(student_name=name,
-                                                                                download_dir=certificates_path,
-                                                                                verify_dir=verify_path,
-                                                                                grade=grade,
-                                                                                designation=designation,)
+        _generate_certificate = self.versionmap[self.template_version]
+        (download_uuid, verify_uuid, download_url) = _generate_certificate(
+            student_name=name,
+            download_dir=download_dir,
+            verify_dir=verify_dir,
+            grade=grade,
+            designation=designation,
+        )
 
         # upload generated certificate and verification files to S3,
         # or copy them to the web root. Or both.
-        my_certs_path = os.path.join(certificates_path, download_uuid)
-        my_verify_path = os.path.join(verify_path, verify_uuid)
+        my_certs_path = os.path.join(download_dir, download_uuid)
+        my_verify_path = os.path.join(verify_dir, verify_uuid)
         if upload:
             s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
             bucket = s3_conn.get_bucket(BUCKET)
@@ -335,42 +341,11 @@ class CertificateGen(object):
                                 log.info("published {local} to {web}".format(local=local_path, web=publish_dest))
 
         if cleanup:
-            for working_dir in (certificates_path, verify_path):
+            for working_dir in (download_dir, verify_dir):
                 if os.path.exists(working_dir):
                     shutil.rmtree(working_dir)
 
         return (download_uuid, verify_uuid, download_url)
-
-    def _generate_certificate(
-        self,
-        student_name,
-        download_dir,
-        verify_dir,
-        filename=TARGET_FILENAME,
-        grade=None,
-        designation=None,
-    ):
-        """Generate a certificate PDF, signature and validation html files.
-
-        return (download_uuid, verify_uuid, download_url)
-        """
-        versionmap = {
-            1: self._generate_v1_certificate,
-            2: self._generate_v2_certificate,
-            'MIT_PE': self._generate_mit_pe_certificate,
-            'stanford': self._generate_stanford_SOA,
-            '3_dynamic': self._generate_v3_dynamic_certificate,
-            'stanford_cme': self._generate_stanford_cme_certificate,
-        }
-        # TODO: we should be taking args, kwargs, and passing those on to our callees
-        return versionmap[self.template_version](
-            student_name,
-            download_dir,
-            verify_dir,
-            filename,
-            grade,
-            designation,
-        )
 
     def _generate_v1_certificate(
         self,

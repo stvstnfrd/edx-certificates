@@ -10,7 +10,7 @@ from openedx_certificates.renderers.util import autoscale_text
 from openedx_certificates.renderers.util import font_for_string
 from openedx_certificates.renderers.util import WIDTH_LANDSCAPE_PAGE_IN_POINTS, HEIGHT_LANDSCAPE_PAGE_IN_POINTS
 
-import settings
+from openedx_certificates import settings
 
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates.' + __name__)

@@ -12,8 +12,8 @@ import random
 import shutil
 import sys
 
-from gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME, TMP_GEN_DIR
-import settings
+from openedx_certificates.gen_cert import CertificateGen, S3_CERT_PATH, TARGET_FILENAME, TMP_GEN_DIR
+from openedx_certificates import settings
 from tests.test_data import NAMES
 
 

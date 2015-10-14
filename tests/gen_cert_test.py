@@ -8,9 +8,9 @@ import urllib2
 from nose.plugins.skip import SkipTest
 from nose.tools import assert_true
 
-import settings
-from gen_cert import CertificateGen
-from gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
+from openedx_certificates import settings
+from openedx_certificates.gen_cert import CertificateGen
+from openedx_certificates.gen_cert import S3_CERT_PATH, S3_VERIFY_PATH
 from test_data import NAMES
 
 

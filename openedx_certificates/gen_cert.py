@@ -23,7 +23,7 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from HTMLParser import HTMLParser
 from babel.dates import format_date
 
-import settings
+from openedx_certificates import settings
 import collections
 import itertools
 import logging
@@ -64,12 +64,14 @@ l.setLevel('WARNING')
 
 # These are small, so let's just load them at import time and keep them around
 # so we don't have to keep doing the file I/o
-BLANK_PDFS = {
-    'landscape-A4': PdfFileReader(file("{0}/blank.pdf".format(TEMPLATE_DIR), "rb")),
-    'landscape-letter': PdfFileReader(file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb")),
-    'portrait-A4': PdfFileReader(file("{0}/blank-portrait-A4.pdf".format(TEMPLATE_DIR), "rb")),
-}
-
+try:
+    BLANK_PDFS = {
+        'landscape-A4': PdfFileReader(file("{0}/blank.pdf".format(TEMPLATE_DIR), "rb")),
+        'landscape-letter': PdfFileReader(file("{0}/blank-letter.pdf".format(TEMPLATE_DIR), "rb")),
+        'portrait-A4': PdfFileReader(file("{0}/blank-portrait-A4.pdf".format(TEMPLATE_DIR), "rb")),
+    }
+except IOError as error:
+    BLANK_PDFS = {}
 
 def get_cert_date(calling_date_parameter, configured_date_parameter, locale=settings.DEFAULT_LOCALE):
     """Get pertinent date for display on cert
@@ -306,6 +308,8 @@ class CertificateGen(object):
         grade=None,
         designation=None,
     ):
+        import pdb
+        pdb.set_trace()
         # A4 page size is 297mm x 210mm
 
         verify_uuid = uuid.uuid4().hex

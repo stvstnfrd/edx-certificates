@@ -5,9 +5,9 @@ import json
 import sys
 import os
 import time
-import settings
+from openedx_certificates import settings
 from openedx_certificates.queue_xqueue import XQueuePullManager
-from gen_cert import CertificateGen
+from openedx_certificates.gen_cert import CertificateGen
 
 logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates: ' + __name__)

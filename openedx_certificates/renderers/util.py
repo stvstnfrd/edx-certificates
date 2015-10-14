@@ -4,7 +4,7 @@ import copy
 from glob import glob
 import os
 import logging
-import settings
+from openedx_certificates import settings
 
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.pagesizes import letter

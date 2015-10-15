@@ -308,8 +308,6 @@ class CertificateGen(object):
         grade=None,
         designation=None,
     ):
-        import pdb
-        pdb.set_trace()
         # A4 page size is 297mm x 210mm
 
         verify_uuid = uuid.uuid4().hex

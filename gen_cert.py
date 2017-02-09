@@ -22,7 +22,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from HTMLParser import HTMLParser
-from babel.dates import format_datetime
+from babel.dates import format_skeleton
 from babel.dates import get_timezone
 
 import settings
@@ -87,11 +87,11 @@ def get_cert_date(
     """
 
     if calling_date_parameter:
-        date_value = format_datetime(calling_date_parameter, 'MMMM d, y', tzinfo=timezone, locale=locale)
+        date_value = format_skeleton('MMMMdy', calling_date_parameter, tzinfo=timezone, locale=locale)
     elif configured_date_parameter == "ROLLING":
-        date_value = format_datetime(datetime.datetime.today(), 'MMMM d, y', tzinfo=timezone, locale=locale)
+        date_value = format_skeleton('MMMMdy', datetime.datetime.today(), tzinfo=timezone, locale=locale)
     else:
-        date_value = format_datetime(configured_date_parameter, 'MMMM d, y', tzinfo=timezone, locale=locale)
+        date_value = fformat_skeleton('MMMMdy', configured_date_parameter, tzinfo=timezone, locale=locale)
 
     date_string = u"{0}".format(date_value)
 

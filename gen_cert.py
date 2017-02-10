@@ -87,7 +87,7 @@ def get_cert_date(
     """
     utc_zone = get_timezone('UTC')
     to_zone = get_timezone(timezone)
-    
+
     if calling_date_parameter:
         date = strptime(calling_date_parameter, '%y-%m-%d')
     elif configured_date_parameter == "ROLLING":

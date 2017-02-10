@@ -89,7 +89,7 @@ def get_cert_date(
     to_zone = get_timezone(timezone)
 
     if calling_date_parameter:
-        date = datetime.strptime(calling_date_parameter, '%y-%m-%d')
+        date = calling_date_parameter
     elif configured_date_parameter == "ROLLING":
         date = datetime.today()
     else:

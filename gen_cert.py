@@ -96,7 +96,9 @@ def get_cert_date(
         date = strptime(configured_date_parameter, '%y-%m-%d')
 
     date = date.replace(tzinfo=utc_zone)
-    date_value = format_date(date.astimezone(to_zone).date(), 'long', locale=locale)
+    date = date.astimezone(to_zone)
+    date = date.date()
+    date_value = format_date(date, 'long', locale=locale)
     date_string = u"{0}".format(date_value)
 
     return date_string

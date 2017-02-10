@@ -83,20 +83,17 @@ def get_cert_date(
     - If 'configured_date_parameter' is set, use that date.
     - Else, use today's date.
     """
-    utc_zone = get_timezone('UTC')
+    from_zone = get_timezone(settings.TIMEZONE)
     to_zone = get_timezone(timezone)
-
     if configured_date_parameter:
         date = datetime.strptime(configured_date_parameter, '%y-%m-%d')
     else:
         date = datetime.today()
-
-    date = date.replace(tzinfo=utc_zone)
+    date = date.replace(tzinfo=from_zone)
     date = date.astimezone(to_zone)
     date = date.date()
     date_value = format_date(date, 'long', locale=locale)
     date_string = u"{0}".format(date_value)
-
     return date_string
 
 

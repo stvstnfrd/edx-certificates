@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import copy
-import datetime
+from datetime import datetime
 import gnupg
 import math
 import os
@@ -91,7 +91,7 @@ def get_cert_date(
     if calling_date_parameter:
         date = datetime.strptime(calling_date_parameter, '%y-%m-%d')
     elif configured_date_parameter == "ROLLING":
-        date = datetime.datetime.today()
+        date = datetime.today()
     else:
         date = datetime.strptime(configured_date_parameter, '%y-%m-%d')
 

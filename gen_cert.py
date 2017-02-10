@@ -91,7 +91,7 @@ def get_cert_date(
     elif configured_date_parameter == "ROLLING":
         date_value = format_skeleton('MMMMdy', datetime.datetime.today(), tzinfo=timezone, locale=locale)
     else:
-        date_value = fformat_skeleton('MMMMdy', configured_date_parameter, tzinfo=timezone, locale=locale)
+        date_value = format_skeleton('MMMMdy', configured_date_parameter, tzinfo=timezone, locale=locale)
 
     date_string = u"{0}".format(date_value)
 

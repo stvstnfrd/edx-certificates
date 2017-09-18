@@ -57,7 +57,6 @@ def main():
                                 settings.QUEUE_AUTH_USER,
                                 settings.QUEUE_AUTH_PASS,
                                 settings.QUEUE_USER, settings.QUEUE_PASS)
-    cert = None
     while True:
 
         if manager.get_length() == 0:
@@ -95,16 +94,15 @@ def main():
             designation = xqueue_body.get('designation', None)
             if designation:
                 designation = designation.encode('utf-8')
-            if not (cert and cert.is_reusable(course_id, designation)):
-                cert = CertificateGen(
-                    course_id,
-                    template_pdf,
-                    aws_id=args.aws_id,
-                    aws_key=args.aws_key,
-                    long_course=course_name,
-                    issued_date=issued_date,
-                    designation=designation,
-                )
+            cert = CertificateGen(
+                course_id,
+                template_pdf,
+                aws_id=args.aws_id,
+                aws_key=args.aws_key,
+                long_course=course_name,
+                issued_date=issued_date,
+                designation=designation,
+            )
         except (TypeError, ValueError, KeyError, IOError) as e:
             log.critical('Unable to parse queue submission ({0}) : {1}'.format(e, certdata))
             if settings.DEBUG:

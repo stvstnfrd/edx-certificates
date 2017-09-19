@@ -673,25 +673,3 @@ class CertificateGen(object):
             )
 
         return (download_uuid, verify_uuid, download_url)
-
-    def is_reusable(self, course_id, designation):
-        """
-        Checks if cert would be initially the same as a new cert template
-        created with the given course id and designation.
-
-        Currently, only the course id and designation differentiate new
-        certificates pdfs. HOWEVER there are some elements that change after
-        the cert is instantiated, like grade, so it is assumed this function
-        is called prior to those changes and just before new cert creation
-        in order to be relevant.
-
-        Message is logged so we can verify if this optimization is useful.
-        """
-        if course_id == self.course_id and designation == self.designation:
-            log_msg = "Reused CertificateGen for {course_id} and {designation}".format(
-                    course_id=course_id,
-                    designation=designation,
-                )
-            log.info(log_msg)
-            return True
-        return False

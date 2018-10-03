@@ -73,10 +73,10 @@ def test_cert_gen():
 
             # And of course we have a download file, right?
             assert_true(set(download_files) == DOWNLOAD_FILES)
-
-        # Remove files
-        if os.path.exists(tmpdir):
+        try:
             shutil.rmtree(tmpdir)
+        except:  # pragma: no cover
+            pass
 
 
 def test_designation():
@@ -96,8 +96,10 @@ def test_designation():
                     cert_web_root=tmpdir,
                     cleanup=True,
                 )
-                if os.path.exists(tmpdir):
+                try:
                     shutil.rmtree(tmpdir)
+                except:  # pragma: no cover
+                    pass
 
 
 def test_cert_names():

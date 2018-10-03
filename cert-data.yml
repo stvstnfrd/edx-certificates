@@ -358,6 +358,8 @@ course-v1:edX+DemoX_v4+Custom_Instructor_Block_v4:
               x_end: 200
           - image:
               <<: *default_instructor_signature_image
+          - invalid_element_type:
+              this: should be silently ignored
         name_string: '<b>M. Guillaume Hébert</b>'
         title_string: 'Head Concierge'
         supplemental_title_string: 'Lifestyle Manager'

@@ -276,7 +276,7 @@ class CertificateGen(object):
         # or copy them to the web root. Or both.
         my_certs_path = os.path.join(certificates_path, download_uuid)
         my_verify_path = os.path.join(verify_path, verify_uuid)
-        if upload:
+        if upload:  # pragma: no cover
             s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
             bucket = s3_conn.get_bucket(BUCKET)
         if upload or copy_to_webroot:
@@ -287,7 +287,7 @@ class CertificateGen(object):
                         dest_path = os.path.relpath(local_path, start=self.dir_prefix)
                         publish_dest = os.path.join(cert_web_root, dest_path)
 
-                        if upload:
+                        if upload:  # pragma: no cover
                             key = Key(bucket, name=dest_path)
                             key.set_contents_from_filename(local_path, policy='public-read')
                             log.info("uploaded {local} to {s3path}".format(local=local_path, s3path=dest_path))

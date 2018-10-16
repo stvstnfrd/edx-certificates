@@ -90,7 +90,7 @@ def font_for_string(fontlist, ustring):
     for fonttuple in fontlist:
         fonttag = fonttuple[0]
         codepoints = FONT_CHARACTER_TABLES.get(fonttag, [])
-        if not codepoints:
+        if not codepoints:  # pragma: no cover
             warnstring = "Missing or invalid font specification {fonttag} " \
                          "rendering string '{ustring}'.\nFontlist: {fontlist}".format(
                              fonttag=fonttag,

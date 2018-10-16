@@ -66,5 +66,7 @@ class CertificateSubtemplateTests(unittest.TestCase):
                         cert_web_root=tmpdir,
                         cleanup=True,
                     )
-        if os.path.exists(tmpdir):
+        try:
             shutil.rmtree(tmpdir)
+        except:  # pragma: no cover
+            pass

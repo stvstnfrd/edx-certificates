@@ -2,10 +2,14 @@
 language: python
 python:
   - "2.7"
+env:
+  - BOTO_CONFIG=/dev/null
 before_install:
   - pip install pep8
   - pep8 --verbose
 install:
+  - echo '{}' > ../env.json
+  - echo '{}' > ../auth.json
   - pip install --allow-all-external -r requirements.txt
   - pip install coverage
 script:

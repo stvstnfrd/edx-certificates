@@ -188,6 +188,6 @@ def main():
         manager.respond(xqueue_reply)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     args = parse_args()
     main()

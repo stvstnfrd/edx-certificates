@@ -21,7 +21,7 @@ CERT_PRIVATE_DIR = REPO_PATH
 
 # If CERT_PRIVATE_DIR is set in the environment use it
 
-if 'CERT_PRIVATE_DIR' in os.environ:
+if 'CERT_PRIVATE_DIR' in os.environ:  # pragma: no cover
     CERT_PRIVATE_DIR = path(os.environ['CERT_PRIVATE_DIR'])
 
 # This directory and file must exist in CERT_PRIVATE_DIR

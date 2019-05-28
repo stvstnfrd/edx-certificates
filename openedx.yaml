@@ -4,7 +4,7 @@
 nick: cert
 oeps: {}
 openedx-release: {ref: master}
-owner: scottrish
+owner: Stanford-Online
 track-pulls: true
 tags:
   - backend-service

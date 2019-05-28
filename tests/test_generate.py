@@ -79,7 +79,7 @@ def test_cert_gen():
             pass
 
 
-@patch('gen_cert.TMP_GEN_DIR', new_callable=tempfile.mkdtemp)
+@mock.patch('gen_cert.TMP_GEN_DIR', new_callable=tempfile.mkdtemp)
 def test_creates_default_dir(gen_dir):
     """Make sure the certificate generator creates the default directory if it doesn't exist."""
     gen = None

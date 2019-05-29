@@ -79,6 +79,25 @@ def test_cert_gen():
             pass
 
 
+@mock.patch('gen_cert.TMP_GEN_DIR', new_callable=tempfile.mkdtemp)
+def test_creates_default_dir(gen_dir):
+    """Make sure the certificate generator creates the default directory if it doesn't exist."""
+    gen = None
+    try:
+        assert_true(os.path.exists(gen_dir))
+        shutil.rmtree(gen_dir)
+        assert_false(os.path.exists(gen_dir))
+        gen = CertificateGen(settings.CERT_DATA.keys()[0])
+        assert_true(os.path.exists(gen.dir_prefix))
+    finally:
+        if os.path.exists(gen_dir):
+            shutil.rmtree(gen_dir)
+        if gen:
+            # Avoid catastrophy
+            assert_true(gen.dir_prefix.startswith(gen_dir))
+            shutil.rmtree(gen.dir_prefix)
+
+
 def test_designation():
     """
     Generate a test certificate with designation text

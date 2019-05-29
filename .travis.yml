@@ -8,8 +8,6 @@ env:
 branches:
   only:
     - master
-before_install:
-  - export BOTO_CONFIG=/dev/null
 install:
   - echo '{}' > ../env.json
   - echo '{}' > ../auth.json

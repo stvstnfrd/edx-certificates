@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 This is a standalone utility for generating certficiates.
@@ -168,6 +169,6 @@ def main():
         for row in certificate_data:
             print '\t'.join(row)
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     args = parse_args()
     main()

@@ -138,8 +138,7 @@ class CertificateGen(object):
                            template_pdf parameter
         """
         if dir_prefix is None:
-            if not os.path.exists(TMP_GEN_DIR):
-                os.makedirs(TMP_GEN_DIR)
+            self._ensure_dir(TMP_GEN_DIR)
             dir_prefix = tempfile.mkdtemp(prefix=TMP_GEN_DIR)
         self._ensure_dir(dir_prefix)
         self.dir_prefix = dir_prefix
@@ -276,7 +275,7 @@ class CertificateGen(object):
         # or copy them to the web root. Or both.
         my_certs_path = os.path.join(certificates_path, download_uuid)
         my_verify_path = os.path.join(verify_path, verify_uuid)
-        if upload:
+        if upload:  # pragma: no cover
             s3_conn = boto.connect_s3(settings.CERT_AWS_ID, settings.CERT_AWS_KEY)
             bucket = s3_conn.get_bucket(BUCKET)
         if upload or copy_to_webroot:
@@ -287,7 +286,7 @@ class CertificateGen(object):
                         dest_path = os.path.relpath(local_path, start=self.dir_prefix)
                         publish_dest = os.path.join(cert_web_root, dest_path)
 
-                        if upload:
+                        if upload:  # pragma: no cover
                             key = Key(bucket, name=dest_path)
                             key.set_contents_from_filename(local_path, policy='public-read')
                             log.info("uploaded {local} to {s3path}".format(local=local_path, s3path=dest_path))
@@ -673,25 +672,3 @@ class CertificateGen(object):
             )
 
         return (download_uuid, verify_uuid, download_url)
-
-    def is_reusable(self, course_id, designation):
-        """
-        Checks if cert would be initially the same as a new cert template
-        created with the given course id and designation.
-
-        Currently, only the course id and designation differentiate new
-        certificates pdfs. HOWEVER there are some elements that change after
-        the cert is instantiated, like grade, so it is assumed this function
-        is called prior to those changes and just before new cert creation
-        in order to be relevant.
-
-        Message is logged so we can verify if this optimization is useful.
-        """
-        if course_id == self.course_id and designation == self.designation:
-            log_msg = "Reused CertificateGen for {course_id} and {designation}".format(
-                    course_id=course_id,
-                    designation=designation,
-                )
-            log.info(log_msg)
-            return True
-        return False

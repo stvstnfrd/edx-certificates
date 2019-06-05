@@ -13,10 +13,6 @@ logging.config.dictConfig(settings.LOGGING)
 log = logging.getLogger('certificates: ' + __name__)
 
 
-# how long to wait in seconds after an xqueue poll
-SLEEP_TIME = 5
-
-
 def parse_args(args=sys.argv[1:]):
     parser = ArgumentParser(description="""
 
@@ -57,25 +53,14 @@ def main():
                                 settings.QUEUE_AUTH_USER,
                                 settings.QUEUE_AUTH_PASS,
                                 settings.QUEUE_USER, settings.QUEUE_PASS)
-    cert = None
     while True:
 
         if manager.get_length() == 0:
             log.debug("{0} has no jobs".format(str(manager)))
-            time.sleep(SLEEP_TIME)
+            time.sleep(settings.QUEUE_POLL_FREQUENCY)
             continue
         else:
             log.debug('queue length: {0}'.format(manager.get_length()))
-
-        xqueue_body = {}
-        xqueue_header = ''
-        action = ''
-        username = ''
-        grade = None
-        course_id = ''
-        course_name = ''
-        template_pdf = None
-        name = ''
 
         certdata = manager.get_submission()
         log.debug('xqueue response: {0}'.format(certdata))
@@ -95,16 +80,15 @@ def main():
             designation = xqueue_body.get('designation', None)
             if designation:
                 designation = designation.encode('utf-8')
-            if not (cert and cert.is_reusable(course_id, designation)):
-                cert = CertificateGen(
-                    course_id,
-                    template_pdf,
-                    aws_id=args.aws_id,
-                    aws_key=args.aws_key,
-                    long_course=course_name,
-                    issued_date=issued_date,
-                    designation=designation,
-                )
+            cert = CertificateGen(
+                course_id,
+                template_pdf,
+                aws_id=args.aws_id,
+                aws_key=args.aws_key,
+                long_course=course_name,
+                issued_date=issued_date,
+                designation=designation,
+            )
         except (TypeError, ValueError, KeyError, IOError) as e:
             log.critical('Unable to parse queue submission ({0}) : {1}'.format(e, certdata))
             if settings.DEBUG:
@@ -190,6 +174,6 @@ def main():
         manager.respond(xqueue_reply)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     args = parse_args()
     main()

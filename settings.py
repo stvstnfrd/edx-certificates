@@ -21,7 +21,7 @@ CERT_PRIVATE_DIR = REPO_PATH
 
 # If CERT_PRIVATE_DIR is set in the environment use it
 
-if 'CERT_PRIVATE_DIR' in os.environ:
+if 'CERT_PRIVATE_DIR' in os.environ:  # pragma: no cover
     CERT_PRIVATE_DIR = path(os.environ['CERT_PRIVATE_DIR'])
 
 # This directory and file must exist in CERT_PRIVATE_DIR
@@ -31,6 +31,7 @@ CERT_DATA_FILE = 'cert-data.yml'
 
 # DEFAULTS
 DEBUG = False
+
 # This needs to be set on MacOS or anywhere you want logging to simply go
 # to an output file.
 LOGGING_DEV_ENV = True
@@ -98,6 +99,9 @@ CERT_URL = ''
 CERT_DOWNLOAD_URL = ''
 CERT_VERIFY_URL = ''
 
+# This is how long in seconds the cert agent will sleep before polling the queue again.
+QUEUE_POLL_FREQUENCY = 5
+
 # load settings from env.json and auth.json
 if os.path.isfile(ENV_ROOT / "env.json"):
     with open(ENV_ROOT / "env.json") as env_file:
@@ -105,6 +109,7 @@ if os.path.isfile(ENV_ROOT / "env.json"):
     TMP_GEN_DIR = ENV_TOKENS.get('TMP_GEN_DIR', TMP_GEN_DIR)
     QUEUE_NAME = ENV_TOKENS.get('QUEUE_NAME', QUEUE_NAME)
     QUEUE_URL = ENV_TOKENS.get('QUEUE_URL', QUEUE_URL)
+    QUEUE_POLL_FREQUENCY = ENV_TOKENS.get('QUEUE_POLL_FREQUENCY', QUEUE_POLL_FREQUENCY)
     CERT_GPG_DIR = ENV_TOKENS.get('CERT_GPG_DIR', CERT_GPG_DIR)
     CERT_KEY_ID = ENV_TOKENS.get('CERT_KEY_ID', CERT_KEY_ID)
     CERT_BUCKET = ENV_TOKENS.get('CERT_BUCKET', CERT_BUCKET)

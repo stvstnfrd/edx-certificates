@@ -20,6 +20,7 @@ script:
     curl https://raw.githubusercontent.com/edx/configuration/master/playbooks/roles/certs/files/example-key-ownertrust.txt -o /var/tmp/trust.txt
     /usr/bin/gpg --import /var/tmp/key.txt
     /usr/bin/gpg --import-ownertrust /var/tmp/trust.txt
-    nosetests --with-coverage
+    coverage run setup.py test
+    coverage report
 after_success:
   - coveralls

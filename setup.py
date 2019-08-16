@@ -61,13 +61,11 @@ setup(
     package_dir={
         'openedx_certificates': 'openedx_certificates',
     },
-    # package_data={
-    #     "openedx_certificates": [
-    #         'public/*',
-    #         'scenarios/*.xml',
-    #         'templates/*',
-    #     ],
-    # },
+    package_data={
+        "openedx_certificates": [
+            '*',
+        ],
+    },
     classifiers=[
         # https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Intended Audience :: Developers',
@@ -80,4 +78,5 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
     ],
     test_suite='openedx_certificates.tests',
+    tests_require=load_requirements('{}/test_requirements.txt'.format(getcwd())),
 )

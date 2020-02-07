@@ -1,3 +1,29 @@
 [run]
 branch = False
-source = ./
+data_file = reports/.coverage
+source =
+    openedx_certificates
+    certificate_agent
+    create_pdfs
+    gen_cert
+    logsettings
+    settings
+    test_generate
+
+[html]
+title = Certificates Python Test Coverage Report
+directory = reports/cover
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+
+[xml]
+output = reports/coverage.xml

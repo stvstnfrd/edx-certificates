@@ -44,6 +44,7 @@ def load_requirements(*requirements_paths):
         )
     return list(requirements)
 
+print('FUNK', getcwd())
 
 setup(
     name='openedx-certifcates',
@@ -57,11 +58,32 @@ setup(
     packages=[
         'openedx_certificates',
     ],
-    install_requires=load_requirements('{}/requirements.txt'.format(getcwd())),
+    install_requires=[
+        'argparse==1.2.1',
+        'boto==2.27.0',
+        'ddt',
+        'edx-opaque-keys==0.4.0',
+        'gnupg==1.4.0',
+        'nose==1.2.1',
+        'path.py==2.4.1',
+        'pep8==1.5.7',
+        'Pillow<6.0.0',
+        'pyPdf2==1.23',
+        'python-bidi==0.3.4',
+        'PyYAML==3.11',
+        'reportlab==3.1.44',
+        'requests==2.3.0',
+        'babel==1.3',
+        # mock
+        # six
+    ],
     package_dir={
         'openedx_certificates': 'openedx_certificates',
     },
     package_data={
+        '': [
+            '*.txt',
+        ],
         "openedx_certificates": [
             '*',
         ],
@@ -78,5 +100,11 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
     ],
     test_suite='openedx_certificates.tests',
-    tests_require=load_requirements('{}/test_requirements.txt'.format(getcwd())),
+    tests_require=[
+        'coverage',
+        'coveralls',
+        'mock',
+        'pep8',
+        'tox',
+    ],
 )
